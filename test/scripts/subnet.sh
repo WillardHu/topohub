@@ -22,10 +22,10 @@ spec:
     vlanId: ${INT_VLAN_ID}
     ipv4: "${INT_IPV4}"
   feature:
-    enableSyncHoststatus:
+    syncHoststatus:
       enabled: true
       defaultClusterName: cluster1
-    enableBindDhcpIP: true
+      enableBindDhcpIP: true
     enablePxe: true
     enableZtp: false
 EOF
@@ -67,10 +67,10 @@ spec:
     vlanId: ${INT_VLAN_ID}
     ipv4: "${INT_IPV4}"
   feature:
-    enableSyncHoststatus:
+    syncHoststatus:
       enabled: true
       defaultClusterName: cluster2
-    enableBindDhcpIP: true
+      enableBindDhcpIP: true
     enablePxe: true
     enableZtp: true
 EOF

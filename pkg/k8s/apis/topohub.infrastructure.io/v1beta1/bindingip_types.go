@@ -4,6 +4,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	LabelHostStatus       = GroupName + "/hoststatus"
+)
+
 // +genclient
 // +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -13,6 +17,7 @@ import (
 // +kubebuilder:printcolumn:name="IPADDR",type="string",JSONPath=".spec.ipAddr"
 // +kubebuilder:printcolumn:name="MACADDR",type="string",JSONPath=".spec.macAddr"
 // +kubebuilder:printcolumn:name="VALID",type="string",JSONPath=".status.valid"
+
 
 type BindingIp struct {
 	metav1.TypeMeta   `json:",inline"`

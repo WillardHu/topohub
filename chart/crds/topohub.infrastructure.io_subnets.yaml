@@ -27,14 +27,8 @@ spec:
     - jsonPath: .status.dhcpStatus.dhcpIpBindAmount
       name: IP_RESERVED
       type: integer
-    - jsonPath: .spec.feature.enableSyncHoststatus.enabled
-      name: SYNC_ENDPOINT
-      type: boolean
-    - jsonPath: .spec.feature.enableSyncHoststatus.defaultClusterName
-      name: CLUSTER
-      type: string
-    - jsonPath: .spec.feature.enableBindDhcpIP
-      name: BIND_DHCP_IP
+    - jsonPath: .spec.feature.syncHoststatus.enabled
+      name: SYNC_HOSTSTATUS
       type: boolean
     - jsonPath: .spec.feature.enablePxe
       name: PXE
@@ -70,38 +64,37 @@ spec:
               feature:
                 description: Feature configuration
                 properties:
-                  enableBindDhcpIP:
-                    default: false
-                    description: Enable Automatically bind DHCP Client IP in the dhcp
-                      server config
-                    type: boolean
                   enablePxe:
                     default: false
                     description: Enable PXE boot support
                     type: boolean
-                  enableSyncHoststatus:
-                    description: EnableSyncHoststatus configuration
+                  enableZtp:
+                    default: false
+                    description: Enable ZTP configuration for switch
+                    type: boolean
+                  syncHoststatus:
+                    description: SyncHoststatus configuration
                     properties:
                       defaultClusterName:
                         description: Default cluster name
                         type: string
+                      enableBindDhcpIP:
+                        default: true
+                        description: Enable bind dhcp ip
+                        type: boolean
                       enabled:
                         default: false
                         description: Enable automatically create the hoststatus object
                           for the dhcp client. Notice, it will not be deleted automatically
                         type: boolean
                     required:
+                    - enableBindDhcpIP
                     - enabled
                     type: object
-                  enableZtp:
-                    default: false
-                    description: Enable ZTP configuration for switch
-                    type: boolean
                 required:
-                - enableBindDhcpIP
                 - enablePxe
-                - enableSyncHoststatus
                 - enableZtp
+                - syncHoststatus
                 type: object
               interface:
                 description: Interface configuration
@@ -225,9 +218,6 @@ spec:
                       the lease file
                     format: int64
                     type: integer
-                  dhcpIpAutoBindAmount:
-                    format: int64
-                    type: integer
                   dhcpIpAvailableAmount:
                     description: Number of available IP addresses
                     format: int64
@@ -237,19 +227,14 @@ spec:
                       MAC address
                     format: int64
                     type: integer
-                  dhcpIpManualBindAmount:
-                    format: int64
-                    type: integer
                   dhcpIpTotalAmount:
                     description: Total number of IP addresses in the subnet
                     format: int64
                     type: integer
                 required:
                 - dhcpIpActiveAmount
-                - dhcpIpAutoBindAmount
                 - dhcpIpAvailableAmount
                 - dhcpIpBindAmount
-                - dhcpIpManualBindAmount
                 - dhcpIpTotalAmount
                 type: object
               hostNode:

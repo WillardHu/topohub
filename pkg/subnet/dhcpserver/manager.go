@@ -27,9 +27,6 @@ type DhcpServer interface {
 	// UpdateService updates the subnet configuration
 	UpdateService(subnet topohubv1beta1.Subnet) error
 
-	// DeleteDhcpBinding deletes the DHCP binding for the specified IP and MAC
-	DeleteDhcpBinding(ip, mac string) error
-
 	// UpdateBindingIpEvents updates the binding IP events
 	UpdateBindingIpEvents(added []bindingipdata.BindingIPInfo, deleted []bindingipdata.BindingIPInfo) error
 }
@@ -43,7 +40,6 @@ type dhcpServer struct {
 
 	currentLeaseClients         map[string]*DhcpClientInfo
 	currentManualBindingClients map[string]*DhcpClientInfo
-	currentAutoBindingClients   map[string]*DhcpClientInfo
 
 	lockConfigUpdate *lock.RWMutex
 
@@ -55,8 +51,7 @@ type dhcpServer struct {
 	addedDhcpClientForHostStatus chan DhcpClientInfo
 	// 本模块用来通知给 HostStatus 模块，有 dhcp ip 释放
 	deletedDhcpClientForHostStatus chan DhcpClientInfo
-	// 	HostStatus 模块通知来的 HostStatus 删除事件，进行 ip 解绑处理
-	deletedHostStatus chan DhcpClientInfo
+
 
 	// bindingip 模块 往其中添加数据，关于 bindingip 。由本模块来消费使用
 	addedBindingIp   chan bindingipdata.BindingIPInfo
@@ -88,7 +83,6 @@ func NewDhcpServer(config *config.AgentConfig, subnet *topohubv1beta1.Subnet, cl
 		client:                         client,
 		addedDhcpClientForHostStatus:   addedDhcpClientForHostStatus,
 		deletedDhcpClientForHostStatus: deletedDhcpClientForHostStatus,
-		deletedHostStatus:              make(chan DhcpClientInfo, 1000),
 		addedBindingIp:                 make(chan bindingipdata.BindingIPInfo, 1000),
 		deletedBindingIp:               make(chan bindingipdata.BindingIPInfo, 1000),
 		stopCh:                         make(chan struct{}),
@@ -97,7 +91,6 @@ func NewDhcpServer(config *config.AgentConfig, subnet *topohubv1beta1.Subnet, cl
 		log:                            log.Logger.Named("dhcpServer/" + subnet.Name),
 		currentLeaseClients:            make(map[string]*DhcpClientInfo),
 		currentManualBindingClients:    make(map[string]*DhcpClientInfo),
-		currentAutoBindingClients:      make(map[string]*DhcpClientInfo),
 		configTemplatePath:             filepath.Join(config.DhcpConfigTemplatePath, "dnsmasq.conf.tmpl"),
 		configPath:                     filepath.Join(config.StoragePathDhcpConfig, fmt.Sprintf("dnsmasq-%s.conf", subnet.Name)),
 		HostIpBindingsConfigPath:       filepath.Join(config.StoragePathDhcpConfig, fmt.Sprintf("dnsmasq-%s-bindIp.conf", subnet.Name)),
@@ -152,17 +145,14 @@ func (s *dhcpServer) Stop() error {
 	return nil
 }
 
-func (s *dhcpServer) DeleteDhcpBinding(ip, mac string) error {
-	s.deletedHostStatus <- DhcpClientInfo{IP: ip, MAC: mac}
-	return nil
-}
-
 func (s *dhcpServer) UpdateBindingIpEvents(added []bindingipdata.BindingIPInfo, deleted []bindingipdata.BindingIPInfo) error {
-	for _, info := range added {
-		s.addedBindingIp <- info
+	for _, ainfo := range added {
+		s.addedBindingIp <- ainfo
 	}
-	for _, info := range deleted {
-		s.deletedBindingIp <- info
+
+	for _, dinfo := range deleted {
+		s.deletedBindingIp <- dinfo
 	}
+	
 	return nil
 }
