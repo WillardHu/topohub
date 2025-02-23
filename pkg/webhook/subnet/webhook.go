@@ -3,8 +3,9 @@ package subnet
 import (
 	"context"
 	"fmt"
-	"go.uber.org/zap"
 	"net"
+
+	"go.uber.org/zap"
 
 	"github.com/infrastructure-io/topohub/pkg/config"
 
@@ -47,11 +48,11 @@ func (w *SubnetWebhook) Default(ctx context.Context, obj runtime.Object) error {
 
 	w.log.Debugf("Setting initial values for nil fields in Subnet %s", subnet.Name)
 
-	if subnet.Spec.Feature.EnableSyncEndpoint.DefaultClusterName != nil && *subnet.Spec.Feature.EnableSyncEndpoint.DefaultClusterName != "" {
+	if subnet.Spec.Feature.EnableSyncHoststatus.DefaultClusterName != nil && *subnet.Spec.Feature.EnableSyncHoststatus.DefaultClusterName != "" {
 		if subnet.ObjectMeta.Labels == nil {
 			subnet.ObjectMeta.Labels = make(map[string]string)
 		}
-		subnet.ObjectMeta.Labels[topohubv1beta1.LabelClusterName] = *subnet.Spec.Feature.EnableSyncEndpoint.DefaultClusterName
+		subnet.ObjectMeta.Labels[topohubv1beta1.LabelClusterName] = *subnet.Spec.Feature.EnableSyncHoststatus.DefaultClusterName
 	} else {
 		if subnet.ObjectMeta.Labels == nil {
 			subnet.ObjectMeta.Labels = make(map[string]string)

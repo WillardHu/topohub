@@ -34,8 +34,8 @@ spec:
     # 请分配一个可用 IP 地址，作为被 DHCP server 的工作 IP 地址
     ipv4: "${INT_IPV4}"
   feature:
-    enableSyncEndpoint:
-      dhcpClient: true
+    enableSyncHoststatus:
+      enabled: true
       defaultClusterName: cluster1
     enableBindDhcpIP: true
 EOF
@@ -46,11 +46,11 @@ EOF
 
 * 在安装 topohub 时，defaultConfig.dhcpServer.interface 的值指定了节点上的工作网卡，创建subnet 后，会以 spec.interface.vlanId 作为 vlan id， 在该工作网卡上创建 vlan 子接口，带上 “topohub.${vlanId}” 的后缀，并配置 spec.interface.ipv4 地址。如果 spec.interface.vlanId==0，那么不会创建 vlan 子接口，DHCP server 直接工作在该网卡上，并配置 spec.interface.ipv4 地址
 
-* subnet 的 spec.feature.enableSyncEndpoint.dhcpClient 开启后，tophub 会基于 dhcp client 的 IP 分配情况，自动创建 hoststatus 对象实例，其用于管理主机的 BMC 信息。subnet 的 spec.feature.enableSyncEndpoint.defaultClusterName 会设置给 hoststatus 对象实例，便于对主机进行分组管理
+* subnet 的 spec.feature.enableSyncHoststatus.enabled 开启后，tophub 会基于 dhcp client 的 IP 分配情况，自动创建 hoststatus 对象实例，其用于管理主机的 BMC 信息。subnet 的 spec.feature.enableSyncHoststatus.defaultClusterName 会设置给 hoststatus 对象实例，便于对主机进行分组管理
 
 * subnet 的 spec.feature.enableBindDhcpIP 开启后，tophub 会基于 dhcp client 的 IP 分配情况，自动在 DHCP server 的配置文件中创建该 client 的 IP 和 Mac 地址，实现持久化绑定。
 
-后续运维过程中，当该主机不活跃于网络中或者换了 IP 地址，希望绑定原 IP 和 mac 绑定关系，可删除原 hoststatus 实例，即可自动删除 DHCP server 的配置文件中的绑定关系。注意，如果主机基于活跃于网络中，删除 hoststatus 对象是不能实现 IP 和 Mac 的解绑的，因为 subnet 的 spec.feature.enableSyncEndpoint.dhcpClient==true 会再次创建出 hoststatus 对象，再次实现 P 和 Mac 的绑定
+后续运维过程中，当该主机不活跃于网络中或者换了 IP 地址，希望绑定原 IP 和 mac 绑定关系，可删除原 hoststatus 实例，即可自动删除 DHCP server 的配置文件中的绑定关系。注意，如果主机基于活跃于网络中，删除 hoststatus 对象是不能实现 IP 和 Mac 的解绑的，因为 subnet 的 spec.feature.enableSyncHoststatus.enabled==true 会再次创建出 hoststatus 对象，再次实现 P 和 Mac 的绑定
 
 * dhcp server 配置的模板存在于 configmap topohub-dhcp 中，可进行自定义调整。
 
@@ -112,10 +112,9 @@ spec:
   feature:
     enableBindDhcpIP: true
     enablePxe: true
-    enableSyncEndpoint:
+    enableSyncHoststatus:
       defaultClusterName: cluster1
-      dhcpClient: true
-      endpointType: hoststatus
+      enabled: true
     enableZtp: false
   interface:
     interface: eth1
@@ -340,8 +339,8 @@ spec:
     # 请分配一个可用 IP 地址，作为被 DHCP server 的工作 IP 地址
     ipv4: "${INT_IPV4}"
   feature:
-    enableSyncEndpoint:
-      dhcpClient: false
+    enableSyncHoststatus:
+      enabled: false
     enableBindDhcpIP: true
     enablePxe: true
 EOF

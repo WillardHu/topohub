@@ -9,7 +9,6 @@ import (
 	"strings"
 	"text/template"
 	"time"
-	topohubv1beta1 "github.com/infrastructure-io/topohub/pkg/k8s/apis/topohub.infrastructure.io/v1beta1"
 )
 
 // generateDnsmasqConfig generates the dnsmasq configuration file
@@ -187,8 +186,8 @@ func (s *dhcpServer) processDhcpLease(ignoreLeaseExistenceError bool) (needUpdat
 		expireTime := time.Unix(expireTimestamp, 0)
 
 		clusterName := ""
-		if s.subnet.Spec.Feature.EnableSyncEndpoint != nil && s.subnet.Spec.Feature.EnableSyncEndpoint.DefaultClusterName != nil {
-			clusterName = *s.subnet.Spec.Feature.EnableSyncEndpoint.DefaultClusterName
+		if  s.subnet.Spec.Feature.EnableSyncHoststatus.DefaultClusterName != nil {
+			clusterName = *s.subnet.Spec.Feature.EnableSyncHoststatus.DefaultClusterName
 		}
 
 		clientInfo := &DhcpClientInfo{
@@ -206,7 +205,7 @@ func (s *dhcpServer) processDhcpLease(ignoreLeaseExistenceError bool) (needUpdat
 		// hoststatus 进行 crd 实例同步
 
 		if data, exists := previousClients[clientInfo.IP]; !exists {
-			if s.subnet.Spec.Feature.EnableSyncEndpoint != nil && s.subnet.Spec.Feature.EnableSyncEndpoint.DhcpClient && s.subnet.Spec.Feature.EnableSyncEndpoint.EndpointType == topohubv1beta1.EndpointTypeHoststatus {
+			if  s.subnet.Spec.Feature.EnableSyncHoststatus.Enabled {
 				// hoststatus 进行 crd 实例同步
 				s.addedDhcpClientForHostStatus <- *clientInfo
 				s.log.Infof("send event to add dhcp client: %s, %s", clientInfo.MAC, clientInfo.IP)
@@ -217,7 +216,7 @@ func (s *dhcpServer) processDhcpLease(ignoreLeaseExistenceError bool) (needUpdat
 			}
 		} else {
 			if data.MAC != clientInfo.MAC || data.Hostname != clientInfo.Hostname {
-				if s.subnet.Spec.Feature.EnableSyncEndpoint != nil && s.subnet.Spec.Feature.EnableSyncEndpoint.DhcpClient && s.subnet.Spec.Feature.EnableSyncEndpoint.EndpointType == topohubv1beta1.EndpointTypeHoststatus {
+				if  s.subnet.Spec.Feature.EnableSyncHoststatus.Enabled {
 					// hoststatus 进行 crd 实例同步
 					s.addedDhcpClientForHostStatus <- *clientInfo
 					s.log.Infof("send event to update dhcp client, old mac=%s, new mac=%s, old hostname=%s, new hostname=%s, ip=%s", data.MAC, clientInfo.MAC, data.Hostname, clientInfo.Hostname, clientInfo.IP)
@@ -226,11 +225,11 @@ func (s *dhcpServer) processDhcpLease(ignoreLeaseExistenceError bool) (needUpdat
 					// bind new client to conf
 					needUpdateBindings = true
 				}
-			} else if ! clientInfo.DhcpExpireTime.Equal(previousClients[clientInfo.IP].DhcpExpireTime) {
-					if s.subnet.Spec.Feature.EnableSyncEndpoint != nil && s.subnet.Spec.Feature.EnableSyncEndpoint.DhcpClient && s.subnet.Spec.Feature.EnableSyncEndpoint.EndpointType == topohubv1beta1.EndpointTypeHoststatus {
-						s.addedDhcpClientForHostStatus <- *clientInfo
-						s.log.Infof("send event to update dhcp client for its DhcpExpireTime: %s, %s, oldDhcpExpireTime=%s, newDhcpExpireTime=%s", clientInfo.MAC, clientInfo.IP, previousClients[clientInfo.IP].DhcpExpireTime, clientInfo.DhcpExpireTime)
-					}
+			} else if !clientInfo.DhcpExpireTime.Equal(previousClients[clientInfo.IP].DhcpExpireTime) {
+				if  s.subnet.Spec.Feature.EnableSyncHoststatus.Enabled {
+					s.addedDhcpClientForHostStatus <- *clientInfo
+					s.log.Infof("send event to update dhcp client for its DhcpExpireTime: %s, %s, oldDhcpExpireTime=%s, newDhcpExpireTime=%s", clientInfo.MAC, clientInfo.IP, previousClients[clientInfo.IP].DhcpExpireTime, clientInfo.DhcpExpireTime)
+				}
 			}
 		}
 
@@ -240,7 +239,7 @@ func (s *dhcpServer) processDhcpLease(ignoreLeaseExistenceError bool) (needUpdat
 	for _, client := range previousClients {
 		if _, exists := currentLeaseClients[client.IP]; !exists {
 			client.Active = false
-			if s.subnet.Spec.Feature.EnableSyncEndpoint != nil && s.subnet.Spec.Feature.EnableSyncEndpoint.DhcpClient && s.subnet.Spec.Feature.EnableSyncEndpoint.EndpointType == topohubv1beta1.EndpointTypeHoststatus {
+			if  s.subnet.Spec.Feature.EnableSyncHoststatus.Enabled {
 				s.deletedDhcpClientForHostStatus <- *client
 				s.log.Infof("send event to delete dhcp client: %s, %s", client.MAC, client.IP)
 				// 对于删除的 dhcp 客户端，不进行 ip 解绑，确保安全
