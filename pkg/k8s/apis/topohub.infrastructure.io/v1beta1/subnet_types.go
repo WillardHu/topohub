@@ -4,9 +4,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const EndpointTypeHoststatus = "hoststatus"
-
-
 // +genclient
 // +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -15,8 +12,8 @@ const EndpointTypeHoststatus = "hoststatus"
 // +kubebuilder:printcolumn:name="IP_TOTAL",type="integer",JSONPath=".status.dhcpStatus.dhcpIpTotalAmount"
 // +kubebuilder:printcolumn:name="IP_AVAILABLE",type="integer",JSONPath=".status.dhcpStatus.dhcpIpAvailableAmount"
 // +kubebuilder:printcolumn:name="IP_RESERVED",type="integer",JSONPath=".status.dhcpStatus.dhcpIpBindAmount"
-// +kubebuilder:printcolumn:name="SYNC_ENDPOINT",type="boolean",JSONPath=".spec.feature.enableSyncEndpoint.dhcpClient"
-// +kubebuilder:printcolumn:name="CLUSTER",type="string",JSONPath=".spec.feature.enableSyncEndpoint.defaultClusterName"
+// +kubebuilder:printcolumn:name="SYNC_ENDPOINT",type="boolean",JSONPath=".spec.feature.enableSyncHoststatus.enabled"
+// +kubebuilder:printcolumn:name="CLUSTER",type="string",JSONPath=".spec.feature.enableSyncHoststatus.defaultClusterName"
 // +kubebuilder:printcolumn:name="BIND_DHCP_IP",type="boolean",JSONPath=".spec.feature.enableBindDhcpIP"
 // +kubebuilder:printcolumn:name="PXE",type="boolean",JSONPath=".spec.feature.enablePxe"
 // +kubebuilder:printcolumn:name="ZTP",type="boolean",JSONPath=".spec.feature.enableZtp"
@@ -74,19 +71,13 @@ type InterfaceSpec struct {
 
 // FeatureSpec defines the feature configuration
 type FeatureSpec struct {
-	// EnableSyncEndpoint configuration
-	// +optional
-	EnableSyncEndpoint *EnableSyncEndpointSpec `json:"enableSyncEndpoint,omitempty"`
+	// EnableSyncHoststatus configuration
+	EnableSyncHoststatus EnableSyncHoststatusSpec `json:"enableSyncHoststatus"`
 
 	// Enable Automatically bind DHCP Client IP in the dhcp server config
 	// +kubebuilder:validation:Required
-	// +kubebuilder:default=true
+	// +kubebuilder:default=false
 	EnableBindDhcpIP bool `json:"enableBindDhcpIP"`
-
-	// // Enable reservation for non-DHCP IPs
-	// // +kubebuilder:validation:Required
-	// // +kubebuilder:default=false
-	// EnableReserveNoneDhcpIP bool `json:"enableReserveNoneDhcpIP"`
 
 	// Enable PXE boot support
 	// +kubebuilder:validation:Required
@@ -99,12 +90,11 @@ type FeatureSpec struct {
 	EnableZtp bool `json:"enableZtp"`
 }
 
-// EnableSyncEndpointSpec defines the sync endpoint configuration
-type EnableSyncEndpointSpec struct {
+// EnableSyncHoststatusSpec defines the sync endpoint configuration
+type EnableSyncHoststatusSpec struct {
 	// Enable automatically create the hoststatus object for the dhcp client. Notice, it will not be deleted automatically
-	// +kubebuilder:validation:Required
 	// +kubebuilder:default=false
-	DhcpClient bool `json:"dhcpClient"`
+	Enabled bool `json:"enabled"`
 
 	// // Enable subnet scan-based endpoint sync
 	// // +kubebuilder:validation:Required
@@ -114,14 +104,7 @@ type EnableSyncEndpointSpec struct {
 	// Default cluster name
 	// +optional
 	DefaultClusterName *string `json:"defaultClusterName,omitempty"`
-
-	// update what kind of endpoint
-	// +kubebuilder:validation:Enum=hoststatus
-	// +kubebuilder:validation:Required
-	// +kubebuilder:default=hoststatus
-	EndpointType string `json:"endpointType"`
 }
-
 
 // SubnetSpec defines the desired state of Subnet
 type SubnetSpec struct {
@@ -170,9 +153,9 @@ type DhcpStatusSpec struct {
 	DhcpIpActiveAmount uint64 `json:"dhcpIpActiveAmount"`
 
 	// Number of reserved IP addresses which is bond to MAC address
-	DhcpIpBindAmount uint64 `json:"dhcpIpBindAmount"`
+	DhcpIpBindAmount       uint64 `json:"dhcpIpBindAmount"`
 	DhcpIpManualBindAmount uint64 `json:"dhcpIpManualBindAmount"`
-	DhcpIpAutoBindAmount uint64 `json:"dhcpIpAutoBindAmount"`
+	DhcpIpAutoBindAmount   uint64 `json:"dhcpIpAutoBindAmount"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
