@@ -37,6 +37,8 @@ defaultConfig:
   dhcpServer:
     # 宿主机网卡名，最好是 trunk 模式接入网络，从而接入到各种子网中
     interface: ""
+    # 1 day
+    expireTime: "1d"
 
   # for iso and ztp in dchp subnet
   httpServer:

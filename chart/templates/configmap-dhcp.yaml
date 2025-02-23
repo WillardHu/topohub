@@ -17,22 +17,22 @@ data:
 
     # DHCP range configuration
     # format: <start_ip>,<end_ip>,<lease_time>  or <start_ip>,<end_ip>
-    {{- "{{ range .IPRanges }}" }}
-    dhcp-range={{ "{{ . }}" }},1d
-    {{- "{{ end }}" }}
+    {{ "{{ range .IPRanges }}" }}
+    dhcp-range={{ "{{ . }}" }},{{ .Values.defaultConfig.dhcpServer.expireTime }}
+    {{ "{{ end }}" }}
 
     # Gateway configuration
-    {{- "{{ if .Gateway }}" }}
+    {{ "{{ if .Gateway }}" }}
     dhcp-option=3,{{ "{{ .Gateway }}" }}  # Default gateway
-    {{- "{{ end }}" }}
+    {{ "{{ end }}" }}
 
     # DNS configuration
-    {{- "{{ if .DNS }}" }}
+    {{ "{{ if .DNS }}" }}
     dhcp-option=6,{{ "{{ .DNS }}" }}  # DNS server
-    {{- "{{ end }}" }}
+    {{ "{{ end }}" }}
 
     # PXE boot configuration
-    {{- "{{ if .EnablePxe }}" }}
+    {{ "{{ if .EnablePxe }}" }}
     # Enable TFTP server
     enable-tftp
     tftp-root={{ "{{ .TftpServerDir }}" }}
@@ -40,15 +40,15 @@ data:
     # PXE boot menu
     dhcp-match=set:efi-x86_64,option:client-arch,7
     dhcp-boot=tag:efi-x86_64,{{ "{{ .PxeEfiInTftpServerDir }}" }}/core.efi
-    {{- "{{ end }}" }}
+    {{ "{{ end }}" }}
 
     
-    {{- "{{ if .EnableZtp }}" }}
+    {{ "{{ if .EnableZtp }}" }}
     # DHCP options for ZTP
     dhcp-option=vendor:Cisco,9,http://{{ "{{ .SelfIP }}" }}/ztp.py
     dhcp-option=vendor:Arista,114,http://{{ "{{ .SelfIP }}" }}/ztp.py
     dhcp-option=vendor:Juniper,0,http://{{ "{{ .SelfIP }}" }}/ztp.conf
-    {{- "{{ end }}" }}
+    {{ "{{ end }}" }}
 
     conf-file={{ "{{ .HostIpBindingsConfigPath }}" }}
 
