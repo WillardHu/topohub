@@ -147,7 +147,7 @@ type DhcpStatusSpec struct {
 	DhcpIpActiveAmount uint64 `json:"dhcpIpActiveAmount"`
 
 	// Number of reserved IP addresses which is bond to MAC address
-	DhcpIpBindAmount       uint64 `json:"dhcpIpBindAmount"`
+	DhcpIpBindAmount uint64 `json:"dhcpIpBindAmount"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

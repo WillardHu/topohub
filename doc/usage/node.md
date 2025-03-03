@@ -112,11 +112,11 @@ metadata:
 spec:
   feature:
     enablePxe: true
+    enableZtp: false
     syncHoststatus:
       enabled: true
       defaultClusterName: cluster1
       enableBindDhcpIP: true
-    enableZtp: false
   interface:
     interface: eth1
     ipv4: 192.168.1.3/24
