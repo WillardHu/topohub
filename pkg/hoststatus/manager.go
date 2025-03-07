@@ -1,8 +1,9 @@
 package hoststatus
 
 import (
-	"go.uber.org/zap"
 	"sync"
+
+	"go.uber.org/zap"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
@@ -10,6 +11,7 @@ import (
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 
 	"github.com/infrastructure-io/topohub/pkg/config"
 	hoststatusdata "github.com/infrastructure-io/topohub/pkg/hoststatus/data"
@@ -31,12 +33,12 @@ type hostStatusController struct {
 	// config holds the agent configuration, which is used to
 	// determine the cluster agent name and the path to the feature
 	// configuration directory.
-	config               *config.AgentConfig
-	stopCh               chan struct{}
-	wg                   sync.WaitGroup
-	recorder             record.EventRecorder
-	addChan              chan dhcpserver.DhcpClientInfo
-	deleteChan           chan dhcpserver.DhcpClientInfo
+	config     *config.AgentConfig
+	stopCh     chan struct{}
+	wg         sync.WaitGroup
+	recorder   record.EventRecorder
+	addChan    chan dhcpserver.DhcpClientInfo
+	deleteChan chan dhcpserver.DhcpClientInfo
 
 	log *zap.SugaredLogger
 }
@@ -50,14 +52,14 @@ func NewHostStatusController(kubeClient kubernetes.Interface, config *config.Age
 	recorder := eventBroadcaster.NewRecorder(mgr.GetScheme(), corev1.EventSource{Component: "bmc-controller"})
 
 	controller := &hostStatusController{
-		client:               mgr.GetClient(),
-		kubeClient:           kubeClient,
-		config:               config,
-		addChan:              addChan,
-		deleteChan:           deleteChan,
-		stopCh:               make(chan struct{}),
-		recorder:             recorder,
-		log:                  log.Logger.Named("hoststatus"),
+		client:     mgr.GetClient(),
+		kubeClient: kubeClient,
+		config:     config,
+		addChan:    addChan,
+		deleteChan: deleteChan,
+		stopCh:     make(chan struct{}),
+		recorder:   recorder,
+		log:        log.Logger.Named("hoststatus"),
 	}
 
 	log.Logger.Debugf("HostStatus controller created successfully")
@@ -85,6 +87,9 @@ func (c *hostStatusController) SetupWithManager(mgr ctrl.Manager) error {
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&topohubv1beta1.HostStatus{}).
+		WithOptions(controller.Options{
+			MaxConcurrentReconciles: 30, // 设置你希望的并发数量
+		}).
 		Complete(c)
 }
 

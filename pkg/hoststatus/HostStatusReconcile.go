@@ -5,13 +5,12 @@ package hoststatus
 import (
 	"context"
 	"fmt"
-	"sync"
 	"time"
 
 	hoststatusdata "github.com/infrastructure-io/topohub/pkg/hoststatus/data"
 	topohubv1beta1 "github.com/infrastructure-io/topohub/pkg/k8s/apis/topohub.infrastructure.io/v1beta1"
 
-	//"github.com/infrastructure-io/topohub/pkg/lock"
+	"github.com/infrastructure-io/topohub/pkg/lock"
 	"github.com/infrastructure-io/topohub/pkg/redfish"
 
 	gofishredfish "github.com/stmcginnis/gofish/redfish"
@@ -22,10 +21,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
-
-// the lock-holding timeout is long because it needs to send http request to redfish for each host
-// so it uses sync.Mutex instead of lock.Mutex
-var hostStatusLock = &sync.Mutex{}
 
 // ------------------------------  update the spec.info of the hoststatus
 
@@ -89,10 +84,11 @@ func (c *hostStatusController) GenerateEvents(logEntrys []*gofishredfish.LogEntr
 
 // this is called by UpdateHostStatusAtInterval and UpdateHostStatusWrapper
 func (c *hostStatusController) UpdateHostStatusInfo(name string, d *hoststatusdata.HostConnectCon) (bool, error) {
-
-	// local lock for updateing each hostStatus
-	hostStatusLock.Lock()
-	defer hostStatusLock.Unlock()
+	// lock for updateing hostStatus instance
+	c.log.Debugf("lock for updateing hostStatus instance %s", name)
+	lock := lock.LockManagerInstance.GetLock(name)
+	lock.Lock()
+	defer lock.Unlock()
 
 	// 创建 redfish 客户端
 	var healthy bool
