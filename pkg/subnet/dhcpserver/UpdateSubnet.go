@@ -100,7 +100,6 @@ func (s *dhcpServer) updateSubnetWithRetry() error {
 				type clientInfo struct {
 					Mac        string `json:"mac"`
 					ManualBind bool   `json:"manualBind"`
-					AutoBind   bool   `json:"autoBind"`
 					Hostname   string `json:"hostname"`
 				}
 
@@ -111,7 +110,6 @@ func (s *dhcpServer) updateSubnetWithRetry() error {
 				for ip, client := range dhcpClient {
 					clientMap[ip] = clientInfo{
 						Mac:      client.MAC,
-						AutoBind: false,
 						Hostname: client.Hostname,
 					}
 					counter++
@@ -125,7 +123,6 @@ func (s *dhcpServer) updateSubnetWithRetry() error {
 					clientMap[ip] = clientInfo{
 						Mac:        client.MAC,
 						ManualBind: true,
-						AutoBind:   false,
 						Hostname:   client.Hostname,
 					}
 				}
