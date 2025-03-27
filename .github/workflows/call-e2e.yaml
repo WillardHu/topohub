@@ -1,0 +1,120 @@
+name: Call E2E
+
+env:
+  E2E_LOG_PATH: tests/runtime/e2edebugLog.txt
+  ONLINE_REGISTER: ghcr.io
+
+permissions: write-all
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        required: true
+        type: string
+      e2e_labels:
+        required: false
+        type: string
+      kind_node_image:
+        required: false
+        type: string
+      suffix:
+        required: false
+        type: string
+
+jobs:
+  e2e_commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Prepare
+        id: prepare
+        run: |
+          echo "ref: ${{ inputs.ref }} "
+          echo "e2e_labels: ${{ inputs.e2e_labels }}"
+          # echo "suffix: ${{ inputs.suffix }}"
+          tmp=${{ github.repository }}
+          echo "REPOSITORY_OWNER=${tmp%/*}" >> $GITHUB_ENV
+          # echo "RUN_IMAGE_SUFFIX=topohub-${{ inputs.suffix }}" >> $GITHUB_ENV
+          #========
+          echo "===== image "
+          echo "ci image tag: ${{ inputs.ref }}"
+          TMP=` date +%m%d%H%M%S `
+          E2E_CLUSTER_NAME="project${TMP}"
+          echo "RUN_KIND_CLUSTER_NAME=${E2E_CLUSTER_NAME}" >> $GITHUB_ENV
+          if ${{ inputs.kind_node_image != '' }} ; then
+            TMP=${{ inputs.kind_node_image }}
+            VAR=${TMP##*:}
+            VAR=${VAR//./_}
+            echo "RUN_VAR=${VAR}" >> $GITHUB_ENV
+          else
+            echo "RUN_VAR=latest" >> $GITHUB_ENV            
+          fi
+          
+
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.ref }}
+
+      # download all artifact
+      # https://github.com/actions/download-artifact#download-all-artifacts
+      # Download all artifact
+      - name: Download images
+        uses: actions/download-artifact@v4
+        with:
+          path: output/artifact  
+
+      - name: Load And Scan Images
+        run: |
+          PROJECT_DIR=`pwd`
+          cd output/artifact
+          ls
+          ALL_DIR=`ls`
+          IMAGE_DIR=""
+          for ITEM in $ALL_DIR ; do
+              grep -E "^image-tar" <<< "${ITEM}" &>/dev/null && IMAGE_DIR+=" ${ITEM} "
+          done
+          echo "IMAGE_DIR=${IMAGE_DIR}"
+          for ITEM in $IMAGE_DIR ; do
+              TAR_FILES=`ls ${ITEM}`
+              ls -l ${ITEM}
+              for TAR in $TAR_FILES ; do
+                echo "image tar ${ITEM}/${TAR}"
+                cat ${ITEM}/${TAR} |  docker import - ${{ env.ONLINE_REGISTER }}/${{ env.REPOSITORY_OWNER }}/${TAR%*.tar}:${{ inputs.ref }}
+              done
+          done
+          docker images           
+
+
+      - name: Setup Golang
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.24.0
+          id: go
+
+      # https://github.com/helm/kind-action
+      - name: Install Kind Bin
+        uses: helm/kind-action@v1.8.0
+        with:
+          install_only: true
+          
+      - name: Run e2e Test
+        continue-on-error: true
+        run: |
+          echo ${{ github.event.inputs.labels }}
+          RESULT=0
+          make e2e -e VERSION=${{ inputs.ref }} || RESULT=1
+          if ((RESULT==0)) ; then
+              echo "RUN_PASS=true" >> $GITHUB_ENV
+          else
+              echo "RUN_PASS=false" >> $GITHUB_ENV
+          fi
+
+      - name: Show e2e Result
+        run: |
+          if ${{ env.RUN_PASS == 'true' }} ;then
+              exit 0
+          else
+              exit 1
+          fi
