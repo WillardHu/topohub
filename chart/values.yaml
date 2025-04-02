@@ -112,6 +112,9 @@ nodeAffinity:
         values:
         - "true"
 
+## @param topohub.extraArgs the additional arguments of topohub container
+extraArgs: []
+
 ## @skip spiderpoolAgent.tolerations
 tolerations:
   - operator: Exists

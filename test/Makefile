@@ -52,6 +52,9 @@ deployTopohub:
 	@echo "deploy topohub"
 	chmod +x scripts/install-topohub.sh
 	CLUSTER_NAME=$(KIND_CLUSTER_NAME) IMAGE_VERSION=$(VERSION) \
+		PYROSCOPE_LOCAL_PORT=$(PYROSCOPE_LOCAL_PORT) \
+		PYROSCOPE_CONTAINER_NAME=$(PYROSCOPE_CONTAINER_NAME) \
+		IMAGE_PYROSCOPE_NAME=$(IMAGE_PYROSCOPE_NAME) \
 		IMAGE_NAME=$(TOPOHUB_IMAGE_REF) ./scripts/install-topohub.sh
 	chmod +x scripts/subnet.sh && ./scripts/subnet.sh
 
@@ -87,4 +90,6 @@ clean:
 	else \
 		echo "Kind cluster $(KIND_CLUSTER_NAME) does not exist"; \
 	fi
+	docker stop $(PYROSCOPE_CONTAINER_NAME) || true
+	docker rm $(PYROSCOPE_CONTAINER_NAME) || true
 	docker network rm $(KIND_CLUSTER_NAME)-secondary || true

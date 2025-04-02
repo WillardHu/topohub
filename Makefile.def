@@ -6,6 +6,7 @@ REGISTRY ?= ghcr.io/infrastructure-io
 # Image names
 TOOLS_IMAGE_NAME = tools
 TOPOHUB_IMAGE_NAME = topohub
+IMAGE_PYROSCOPE_NAME ?= docker.io/grafana/pyroscope:latest
 
 # Image tags
 VERSION ?= $(shell git rev-parse --short HEAD)
@@ -48,3 +49,8 @@ GIT_COMMIT_VERSION = $(shell git show -s --format='format:%H')
 GIT_COMMIT_TIME = $(shell git show -s --format='format:%aI')
 
 DOCKER_BUILD_FLAGS := --build-arg GIT_COMMIT_VERSION=$(GIT_COMMIT_VERSION) --build-arg GIT_COMMIT_TIME=$(GIT_COMMIT_TIME) --build-arg PROJECT_VERSION=$(PROJECT_VERSION)
+
+
+#====== pyroscope
+PYROSCOPE_CONTAINER_NAME := e2e-pyroscope
+PYROSCOPE_LOCAL_PORT := 4040
