@@ -52,6 +52,7 @@ spec:
           capabilities:
             add:
             - NET_ADMIN
+        command: ["topohub"]
         args:
         - --metrics-port={{ .Values.metricsPort }}
         - --health-probe-port={{ .Values.healthProbePort }}
