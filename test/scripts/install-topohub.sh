@@ -24,7 +24,6 @@ helm uninstall topohub -n topohub --wait &>/dev/null || true
 
 echo "run topo on worker nodes"
 kubectl label node ${CLUSTER_NAME}-worker topohub=true
-kubectl label node ${CLUSTER_NAME}-worker2 topohub=true
 
 cat <<EOF >/tmp/topo.yaml
 replicaCount: 1

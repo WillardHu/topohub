@@ -50,6 +50,12 @@ GIT_COMMIT_TIME = $(shell git show -s --format='format:%aI')
 
 DOCKER_BUILD_FLAGS := --build-arg GIT_COMMIT_VERSION=$(GIT_COMMIT_VERSION) --build-arg GIT_COMMIT_TIME=$(GIT_COMMIT_TIME) --build-arg PROJECT_VERSION=$(PROJECT_VERSION)
 
+#================== kind configuration
+KIND_NETWORK_SUBNET := 192.168.1.0/24
+KIND_NETWORK_GATEWAY := 192.168.1.1
+KIND_CONTROL_IP := 192.168.1.2
+KIND_WORKER1_IP := 192.168.1.3
+KIND_WORKER2_IP := 192.168.1.4
 
 #====== pyroscope
 PYROSCOPE_CONTAINER_NAME := e2e-pyroscope

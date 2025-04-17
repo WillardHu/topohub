@@ -6,6 +6,9 @@ import (
 	"net"
 	"regexp"
 	"strings"
+
+	topohubv1beta1 "github.com/infrastructure-io/topohub/pkg/k8s/apis/topohub.infrastructure.io/v1beta1"
+	"github.com/vishvananda/netlink"
 )
 
 // ValidateIPInSubnet checks if an IP address is within a subnet
@@ -309,7 +312,7 @@ func IsValidIPv4(ipStr string) bool {
 func IsValidUnicastMAC(macStr string) bool {
 	// Replace hyphens with colons for consistent parsing
 	macStr = strings.ReplaceAll(macStr, "-", ":")
-	
+
 	// Handle MAC address without separators
 	if len(macStr) == 12 && !strings.Contains(macStr, ":") {
 		// Insert colons every 2 characters
@@ -322,18 +325,18 @@ func IsValidUnicastMAC(macStr string) bool {
 		}
 		macStr = buffer.String()
 	}
-	
+
 	// Parse MAC address
 	mac, err := net.ParseMAC(macStr)
 	if err != nil {
 		return false
 	}
-	
+
 	// Check if it's a 48-bit MAC address
 	if len(mac) != 6 {
 		return false
 	}
-	
+
 	// Check if it's a unicast address (least significant bit of first octet is 0)
 	return (mac[0] & 1) == 0
 }
@@ -396,4 +399,47 @@ func IsIPInRange(ip net.IP, ipRange string) bool {
 func ipToUint32(ip net.IP) uint32 {
 	ip = ip.To4()
 	return uint32(ip[0])<<24 | uint32(ip[1])<<16 | uint32(ip[2])<<8 | uint32(ip[3])
+}
+
+// ValidateHostInterfaceSubnet validates the matching relationship between host interface and subnet configuration
+// When the subnet IP is within the host network interface's subnet, it only allows the new subnet's IP and
+// subnet mask to exactly match the selected interface's configuration
+// avoid affecting the network of the host machine
+// Example:
+//   - Input:
+//     parent: netlink.Link
+//     iface: *topohubv1beta1.InterfaceSpec
+//   - Returns: nil if subnet IP matches the host interface
+//   - Error case: Returns error if interface does not exist, subnet IP is invalid or does not match
+func ValidateHostInterfaceSubnet(parent netlink.Link, iface *topohubv1beta1.InterfaceSpec) error {
+	// Get host interface IP addresses and subnet information
+	hostAddrs, err := netlink.AddrList(parent, netlink.FAMILY_V4)
+	if err != nil {
+		return fmt.Errorf("failed to get host interface IP addresses: %v", err)
+	}
+
+	// Parse subnet IP address
+	subnetAddr, err := netlink.ParseAddr(iface.IPv4)
+	if err != nil {
+		return fmt.Errorf("invalid subnet IP address %s: %v", iface.IPv4, err)
+	}
+
+	// Check if subnet IP is in the same subnet as host interface
+	for _, hostAddr := range hostAddrs {
+		// Check if in the same subnet
+		if hostAddr.IPNet.Contains(subnetAddr.IP) {
+			if iface.VlanID != nil && *iface.VlanID > 0 {
+				return fmt.Errorf("subnet IP %s is in the same subnet as host interface %s (%s), but VLAN ID is not allowed",
+					iface.IPv4, iface.Interface, hostAddr.String())
+			}
+			// If in the same subnet, check if IP addresses and subnet masks match exactly
+			if !hostAddr.Equal(*subnetAddr) {
+				return fmt.Errorf("subnet IP %s is in the same subnet as host interface %s (%s), but IP address or subnet mask doesn't match exactly",
+					iface.IPv4, iface.Interface, hostAddr.String())
+			}
+			return nil
+		}
+	}
+
+	return nil
 }

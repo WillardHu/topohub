@@ -17,6 +17,7 @@ import (
 	topohubv1beta1 "github.com/infrastructure-io/topohub/pkg/k8s/apis/topohub.infrastructure.io/v1beta1"
 	"github.com/infrastructure-io/topohub/pkg/log"
 	"github.com/infrastructure-io/topohub/pkg/tools"
+	"github.com/vishvananda/netlink"
 )
 
 // +kubebuilder:webhook:path=/validate-topohub-infrastructure-io-v1beta1-subnet,mutating=true,failurePolicy=fail,sideEffects=None,groups=topohub.infrastructure.io,resources=subnets,verbs=create;update,versions=v1beta1,name=vsubnet.kb.io,admissionReviewVersions=v1
@@ -192,6 +193,7 @@ func (w *SubnetWebhook) validateSubnet(ctx context.Context, subnet *topohubv1bet
 	return nil
 }
 
+// TODO some validations not applicable multiple agents.
 // validateInterface validates the InterfaceSpec
 func (w *SubnetWebhook) validateInterface(iface *topohubv1beta1.InterfaceSpec, cidr *net.IPNet, subnet *topohubv1beta1.Subnet) error {
 	if iface == nil {
@@ -212,6 +214,17 @@ func (w *SubnetWebhook) validateInterface(iface *topohubv1beta1.InterfaceSpec, c
 
 	// Validate interface IPv4 address is in the same subnet
 	if err := tools.ValidateIPWithSubnetMatch(iface.IPv4, cidr); err != nil {
+		return fmt.Errorf("interface IPv4 validation failed: %v", err)
+	}
+
+	// Get host interface
+	parent, err := netlink.LinkByName(iface.Interface)
+	if err != nil {
+		return fmt.Errorf("failed to get host interface: %v", err)
+	}
+
+	// Validate host interface subnet
+	if err := tools.ValidateHostInterfaceSubnet(parent, iface); err != nil {
 		return fmt.Errorf("interface IPv4 validation failed: %v", err)
 	}
 

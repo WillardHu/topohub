@@ -15,10 +15,10 @@ init:
 	@echo "storageclass local-path does not allow pods with a specified NodeName, so it makes all pods to run on the worker node"
 	kubectl taint node $(KIND_CLUSTER_NAME)-control-plane local-path=nopod:NoSchedule
 	docker network rm $(KIND_CLUSTER_NAME)-secondary || true
-	docker network create --driver=bridge --subnet=192.168.1.0/24 --gateway=192.168.1.1 $(KIND_CLUSTER_NAME)-secondary
-	docker network connect $(KIND_CLUSTER_NAME)-secondary $(KIND_CLUSTER_NAME)-control-plane
-	docker network connect $(KIND_CLUSTER_NAME)-secondary $(KIND_CLUSTER_NAME)-worker
-	docker network connect $(KIND_CLUSTER_NAME)-secondary $(KIND_CLUSTER_NAME)-worker2
+	docker network create --driver=bridge --subnet=$(KIND_NETWORK_SUBNET) --gateway=$(KIND_NETWORK_GATEWAY) $(KIND_CLUSTER_NAME)-secondary
+	docker network connect --ip=$(KIND_CONTROL_IP) $(KIND_CLUSTER_NAME)-secondary $(KIND_CLUSTER_NAME)-control-plane
+	docker network connect --ip=$(KIND_WORKER1_IP) $(KIND_CLUSTER_NAME)-secondary $(KIND_CLUSTER_NAME)-worker
+	docker network connect --ip=$(KIND_WORKER2_IP) $(KIND_CLUSTER_NAME)-secondary $(KIND_CLUSTER_NAME)-worker2
 
 installSpiderpool:
 	@echo "Installing spiderpool..."

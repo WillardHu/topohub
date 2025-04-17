@@ -2,8 +2,8 @@ package dhcpserver
 
 import (
 	"fmt"
-	"strings"
 
+	"github.com/infrastructure-io/topohub/pkg/tools"
 	"github.com/vishvananda/netlink"
 )
 
@@ -30,6 +30,11 @@ func (s *dhcpServer) setupInterface() error {
 		if err := netlink.LinkSetUp(parent); err != nil {
 			return fmt.Errorf("failed to bring up base interface %s: %v", baseInterface, err)
 		}
+	}
+
+	// 验证接口配置是否和主机网络冲突
+	if err := tools.ValidateHostInterfaceSubnet(parent, &s.subnet.Spec.Interface); err != nil {
+		return fmt.Errorf("interface configuration conflicts with host network: %v", err)
 	}
 
 	// 根据配置创建接口
@@ -80,9 +85,9 @@ func (s *dhcpServer) createVlanInterface(parent netlink.Link, name string, vlanI
 		},
 		VlanId: vlanId,
 	}
-	s.log.Infof("Creating VLAN interface: %+v",  vlan )
+	s.log.Infof("Creating VLAN interface: %+v", vlan)
 
-	if len(name)>15 {
+	if len(name) > 15 {
 		return fmt.Errorf("interface name %s is too long, it is must be less than 15 letters", name)
 	}
 
@@ -161,27 +166,8 @@ func (s *dhcpServer) configureIP(name, ipStr string) error {
 	return nil
 }
 
-// cleanupAllInterface removes all topohub interfaces on the base interface
+// TODO cleanupAllInterface removes all topohub interfaces on the base interface
 func (s *dhcpServer) cleanupAllInterface() error {
-	baseInterface := s.subnet.Spec.Interface.Interface
-
-	// 获取所有网络接口
-	links, err := netlink.LinkList()
-	if err != nil {
-		return fmt.Errorf("failed to list interfaces: %v", err)
-	}
-
-	// 查找并删除所有带有 .topohub 前缀的接口
-	for _, link := range links {
-		name := link.Attrs().Name
-		if strings.HasPrefix(name, baseInterface+".topohub") {
-			s.log.Debugf("Removing interface: %s", name)
-			if err := netlink.LinkDel(link); err != nil {
-				s.log.Warnf("Failed to delete interface %s: %v", name, err)
-			}
-		}
-	}
-
 	return nil
 }
 
