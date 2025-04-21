@@ -36,7 +36,7 @@ type IPv4SubnetSpec struct {
 
 	// IPRange for DHCP server (required)
 	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:Pattern=`^([0-9]{1,3}\.){3}[0-9]{1,3}-([0-9]{1,3}\.){3}[0-9]{1,3}(,([0-9]{1,3}\.){3}[0-9]{1,3})*$`
+	// +kubebuilder:validation:Pattern=`^([0-9]{1,3}\.){3}[0-9]{1,3}-([0-9]{1,3}\.){3}[0-9]{1,3}(,([0-9]{1,3}\.){3}[0-9]{1,3}-([0-9]{1,3}\.){3}[0-9]{1,3})*$`
 	IPRange string `json:"ipRange"`
 
 	// Gateway for DHCP server (optional)
