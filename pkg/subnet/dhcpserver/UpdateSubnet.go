@@ -16,6 +16,14 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type clientInfo struct {
+	Mac            string `json:"mac"`
+	IsBound        bool   `json:"isBound"`
+	IsAllocated    bool   `json:"isAllocated"`
+	Hostname       string `json:"hostname"`
+	DhcpExpireTime string `json:"dhcpExpireTime"`
+}
+
 // statusUpdateWorker handles subnet status updates with rate limiting
 func (s *dhcpServer) statusUpdateWorker() {
 	ticker := time.NewTicker(time.Second)
@@ -97,33 +105,47 @@ func (s *dhcpServer) updateSubnetWithRetry() error {
 			// GetDhcpClient returns a string representation of all DHCP clients with their binding status
 			updateClientFunc := func(dhcpClient, manualBindClients map[string]*DhcpClientInfo) (string, uint64) {
 
-				type clientInfo struct {
-					Mac        string `json:"mac"`
-					ManualBind bool   `json:"manualBind"`
-					Hostname   string `json:"hostname"`
-				}
-
 				clientMap := make(map[string]clientInfo)
 				counter := uint64(0)
 
-				// Add all current clients first
-				for ip, client := range dhcpClient {
+				// first add all manual bind clients
+				var expireTime string
+				for ip, client := range manualBindClients {
+					expireTime = ""
+					if !client.DhcpExpireTime.IsZero() {
+						expireTime = client.DhcpExpireTime.Format(time.RFC3339)
+					}
 					clientMap[ip] = clientInfo{
-						Mac:      client.MAC,
-						Hostname: client.Hostname,
+						Mac:            client.MAC,
+						IsBound:        true,
+						IsAllocated:    false,
+						Hostname:       client.Hostname,
+						DhcpExpireTime: expireTime,
 					}
 					counter++
 				}
-
-				// Update or add bind clients
-				for ip, client := range manualBindClients {
-					if _, existed := clientMap[ip]; !existed {
+				// then add all dhcp clients
+				for ip, client := range dhcpClient {
+					// if the client is already in manual bind clients, update it
+					if existing, ok := clientMap[ip]; ok {
+						// if mac is not the same, output error
+						if existing.Mac != client.MAC {
+							s.log.Errorf("ip %s is already bound to mac %s, but now mac %s", ip, existing.Mac, client.MAC)
+						}
+						existing.Mac = client.MAC
+						existing.IsAllocated = true
+						existing.Hostname = client.Hostname
+						existing.DhcpExpireTime = client.DhcpExpireTime.Format(time.RFC3339)
+						clientMap[ip] = existing
+					} else {
+						clientMap[ip] = clientInfo{
+							Mac:            client.MAC,
+							IsBound:        false,
+							IsAllocated:    true,
+							Hostname:       client.Hostname,
+							DhcpExpireTime: client.DhcpExpireTime.Format(time.RFC3339),
+						}
 						counter++
-					}
-					clientMap[ip] = clientInfo{
-						Mac:        client.MAC,
-						ManualBind: true,
-						Hostname:   client.Hostname,
 					}
 				}
 
