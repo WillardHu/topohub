@@ -2,6 +2,7 @@ package redfish
 
 import (
 	"fmt"
+	"strings"
 
 	topohubv1beta1 "github.com/infrastructure-io/topohub/pkg/k8s/apis/topohub.infrastructure.io/v1beta1"
 	"github.com/stmcginnis/gofish/redfish"
@@ -34,7 +35,8 @@ func (c *redfishClient) Power(bootCmd string) error {
 		c.logger.Debugf("system %s, boot options: %+v", system.Name, bootOptions)
 		c.logger.Debugf("system %s, boot : %+v", system.Name, system.Boot)
 		// url: /redfish/v1/Systems/Self/ResetActionInfo
-		c.logger.Debugf("system %s, supported reset types: %+v", system.Name, system.SupportedResetTypes)
+		resetTypes := c.GetSupportedResetTypes(system)
+		c.logger.Debugf("system %s, supported reset types: %+v", system.Name, resetTypes)
 
 		switch bootCmd {
 		case topohubv1beta1.BootCmdOn:
@@ -52,6 +54,11 @@ func (c *redfishClient) Power(bootCmd string) error {
 			err = system.Reset(redfish.ResetType(bootCmd))
 
 		case topohubv1beta1.BootCmdResetPxeOnce:
+			// check if the system supports GracefulRestart or ForceRestart
+			if !strings.Contains(resetTypes, string(redfish.GracefulRestartResetType)) && !strings.Contains(resetTypes, string(redfish.ForceRestartResetType)) {
+				return fmt.Errorf("neither GracefulRestart nor ForceRestart is supported by system %s, supported types: %v", system.Name, resetTypes)
+			}
+
 			// https://github.com/stmcginnis/gofish/blob/main/examples/reboot.md
 			// Creates a boot override to pxe once
 			bootOverride := redfish.Boot{
@@ -65,7 +72,16 @@ func (c *redfishClient) Power(bootCmd string) error {
 			if err != nil {
 				return fmt.Errorf("failed to set boot option error:%+v", err)
 			}
-			err = system.Reset(redfish.ForceRestartResetType)
+
+			// try to use GracefulRestart first
+			if strings.Contains(resetTypes, string(redfish.GracefulRestartResetType)) {
+				c.logger.Infof("using GracefulRestart for System: %s", system.Name)
+				err = system.Reset(redfish.GracefulRestartResetType)
+			} else {
+				// try to use ForceRestart
+				c.logger.Infof("using ForceRestart for System: %s", system.Name)
+				err = system.Reset(redfish.ForceRestartResetType)
+			}
 
 		default:
 			c.logger.Errorf("unknown boot cmd: %+v", bootCmd)
