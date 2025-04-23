@@ -1,8 +1,12 @@
 package redfish
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"strings"
+
+	"github.com/stmcginnis/gofish/redfish"
 )
 
 func setData(result map[string]string, key, value string) {
@@ -70,15 +74,9 @@ func (c *redfishClient) GetInfo() (map[string]string, error) {
 	setData(result, "SyatemStatus", string(system.Status.Health))
 	setData(result, "RedfishVersion", service.RedfishVersion)
 	setData(result, "Vendor", service.Vendor)
-	joinStr := ""
-	for _, item := range system.SupportedResetTypes {
-		if len(joinStr) > 0 {
-			joinStr += ","
-		}
-		joinStr += string(item)
-	}
+	// get supported reset types
+	joinStr := c.GetSupportedResetTypes(system)
 	setData(result, "SupportedReset", joinStr)
-	setData(result, "SupportedReset", joinStr )
 
 	// cpu info
 	setData(result, "CpuPhysicalCore", fmt.Sprintf("%d", system.ProcessorSummary.Count))
@@ -268,4 +266,74 @@ func (c *redfishClient) GetInfo() (map[string]string, error) {
 	// ?? 是否可以取出安装的 os 信息
 
 	return result, nil
+}
+
+type ResetActionInfo struct {
+	Description string `json:"Description"`
+	Id          string `json:"Id"`
+	Name        string `json:"Name"`
+	Parameters  []struct {
+		AllowableValues []string `json:"AllowableValues"`
+		DataType        string   `json:"DataType"`
+		Name            string   `json:"Name"`
+		Required        bool     `json:"Required"`
+	} `json:"Parameters"`
+}
+
+// GetSupportedResetTypes 获取支持的ResetTypes类型
+func (c *redfishClient) GetSupportedResetTypes(system *redfish.ComputerSystem) string {
+	joinStr := ""
+
+	c.logger.Debug("Get reset types from system SupportedResetTypes", "SupportedResetTypes", system.SupportedResetTypes)
+	for _, item := range system.SupportedResetTypes {
+		if len(joinStr) > 0 {
+			joinStr += ","
+		}
+		joinStr += string(item)
+	}
+	if joinStr != "" {
+		return joinStr
+	}
+
+	// 尝试从ResetActionInfo获取
+	resetInfoPath := fmt.Sprintf("/redfish/v1/Systems/%s/ResetActionInfo", system.ID)
+	c.logger.Debugf("Trying to get reset types from ResetActionInfo URL: %s", resetInfoPath)
+	resp, err := c.client.Get(resetInfoPath)
+	if err != nil {
+		c.logger.Errorf("Failed to get ResetActionInfo: %v", err)
+		return ""
+	}
+	defer resp.Body.Close()
+
+	// 读取并打印原始响应
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		c.logger.Errorf("Failed to get ResetActionInfo: %v", err)
+		return ""
+	}
+	c.logger.Debugf("ResetActionInfo response: %s", string(respBody))
+
+	// 解析JSON
+	var actionInfo ResetActionInfo
+	err = json.Unmarshal(respBody, &actionInfo)
+	if err != nil {
+		c.logger.Errorf("Failed to decode ResetActionInfo: %v", err)
+		return ""
+	}
+
+	// 查找ResetType参数
+	for _, param := range actionInfo.Parameters {
+		if param.Name == "ResetType" {
+			c.logger.Debugf("Found ResetType parameter with values: %v", param.AllowableValues)
+			for _, value := range param.AllowableValues {
+				if len(joinStr) > 0 {
+					joinStr += ","
+				}
+				joinStr += value
+			}
+			return joinStr
+		}
+	}
+
+	return ""
 }
