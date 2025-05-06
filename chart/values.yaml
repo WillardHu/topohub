@@ -103,6 +103,9 @@ podAnnotations: {}
 
 nodeSelector: {}
 
+# Specify a specific node by name
+nodeName: ""
+
 nodeAffinity:
   requiredDuringSchedulingIgnoredDuringExecution:
     nodeSelectorTerms:
