@@ -6,9 +6,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
-	"strings"
 
 	"github.com/fsnotify/fsnotify"
 	topohubv1beta1 "github.com/infrastructure-io/topohub/pkg/k8s/apis/topohub.infrastructure.io/v1beta1"
@@ -93,7 +93,6 @@ func (s *dhcpServer) monitor() {
 		return
 	}
 
-
 	// watch the process at an interval
 	tickerProcess := time.NewTicker(5 * time.Second)
 	defer tickerProcess.Stop()
@@ -125,10 +124,13 @@ func (s *dhcpServer) monitor() {
 
 			if event.Name == s.leasePath && (event.Op&fsnotify.Write == fsnotify.Write) {
 				s.log.Infof("watcher lease file event: %+v", event)
-				// inform new client to the hoststatus 
+				// inform new client to the hoststatus
 				if _, err := s.processDhcpLease(true); err != nil {
 					s.log.Errorf("failed to processDhcpLease: %v", err)
+					continue
 				}
+				// update the status of subnet
+				s.statusUpdateCh <- struct{}{}
 			} else {
 				s.log.Debugf("watcher invalid file event: %+v", event)
 			}
