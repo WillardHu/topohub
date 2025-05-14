@@ -3,8 +3,10 @@ package bindingip
 import (
 	"context"
 	"fmt"
-	"go.uber.org/zap"
 	"net"
+	"strings"
+
+	"go.uber.org/zap"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -116,9 +118,9 @@ func (w *BindingIPWebhook) validateBindingIP(ctx context.Context, bindingIP *top
 	}
 
 	if !tools.IsIPInRange(ip, subnet.Spec.IPv4Subnet.IPRange) {
-		return fmt.Errorf("IP address %s is not in subnet %s IP range: %s", 
-			bindingIP.Spec.IpAddr, 
-			bindingIP.Spec.Subnet, 
+		return fmt.Errorf("IP address %s is not in subnet %s IP range: %s",
+			bindingIP.Spec.IpAddr,
+			bindingIP.Spec.Subnet,
 			subnet.Spec.IPv4Subnet.IPRange)
 	}
 
@@ -134,8 +136,13 @@ func (w *BindingIPWebhook) validateBindingIP(ctx context.Context, bindingIP *top
 			continue
 		}
 		if existingBindingIP.Spec.IpAddr == bindingIP.Spec.IpAddr {
-			return fmt.Errorf("IP address %s is already used by BindingIP %s", 
-				bindingIP.Spec.IpAddr, 
+			return fmt.Errorf("IP address %s is already used by BindingIP %s",
+				bindingIP.Spec.IpAddr,
+				existingBindingIP.Name)
+		}
+		if strings.EqualFold(existingBindingIP.Spec.MacAddr, bindingIP.Spec.MacAddr) {
+			return fmt.Errorf("Mac %s is already used by BindingIP %s ",
+				bindingIP.Spec.MacAddr,
 				existingBindingIP.Name)
 		}
 	}
