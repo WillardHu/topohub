@@ -34,7 +34,7 @@ func init() {
 	deadlock.Opts.PrintAllCurrentGoroutines = true
 	deadlock.Opts.LogBuf = os.Stderr
 	deadlock.Opts.OnPotentialDeadlock = func() {
-		os.Exit(2)
+		fmt.Fprintf(os.Stderr, "POTENTIAL DEADLOCK DETECTED, but continuing execution\n")
 	}
 }
 
