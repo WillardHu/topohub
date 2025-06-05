@@ -19,58 +19,58 @@ import (
 	cache "k8s.io/client-go/tools/cache"
 )
 
-// HostStatusInformer provides access to a shared informer and lister for
-// HostStatuses.
-type HostStatusInformer interface {
+// RedfishStatusInformer provides access to a shared informer and lister for
+// RedfishStatuses.
+type RedfishStatusInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() topohubinfrastructureiov1beta1.HostStatusLister
+	Lister() topohubinfrastructureiov1beta1.RedfishStatusLister
 }
 
-type hostStatusInformer struct {
+type redfishStatusInformer struct {
 	factory          internalinterfaces.SharedInformerFactory
 	tweakListOptions internalinterfaces.TweakListOptionsFunc
 }
 
-// NewHostStatusInformer constructs a new informer for HostStatus type.
+// NewRedfishStatusInformer constructs a new informer for RedfishStatus type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
-func NewHostStatusInformer(client versioned.Interface, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
-	return NewFilteredHostStatusInformer(client, resyncPeriod, indexers, nil)
+func NewRedfishStatusInformer(client versioned.Interface, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
+	return NewFilteredRedfishStatusInformer(client, resyncPeriod, indexers, nil)
 }
 
-// NewFilteredHostStatusInformer constructs a new informer for HostStatus type.
+// NewFilteredRedfishStatusInformer constructs a new informer for RedfishStatus type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
-func NewFilteredHostStatusInformer(client versioned.Interface, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
+func NewFilteredRedfishStatusInformer(client versioned.Interface, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
 	return cache.NewSharedIndexInformer(
 		&cache.ListWatch{
 			ListFunc: func(options v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.TopohubV1beta1().HostStatuses().List(context.TODO(), options)
+				return client.TopohubV1beta1().RedfishStatuses().List(context.TODO(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.TopohubV1beta1().HostStatuses().Watch(context.TODO(), options)
+				return client.TopohubV1beta1().RedfishStatuses().Watch(context.TODO(), options)
 			},
 		},
-		&apistopohubinfrastructureiov1beta1.HostStatus{},
+		&apistopohubinfrastructureiov1beta1.RedfishStatus{},
 		resyncPeriod,
 		indexers,
 	)
 }
 
-func (f *hostStatusInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
-	return NewFilteredHostStatusInformer(client, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
+func (f *redfishStatusInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
+	return NewFilteredRedfishStatusInformer(client, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
 }
 
-func (f *hostStatusInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&apistopohubinfrastructureiov1beta1.HostStatus{}, f.defaultInformer)
+func (f *redfishStatusInformer) Informer() cache.SharedIndexInformer {
+	return f.factory.InformerFor(&apistopohubinfrastructureiov1beta1.RedfishStatus{}, f.defaultInformer)
 }
 
-func (f *hostStatusInformer) Lister() topohubinfrastructureiov1beta1.HostStatusLister {
-	return topohubinfrastructureiov1beta1.NewHostStatusLister(f.Informer().GetIndexer())
+func (f *redfishStatusInformer) Lister() topohubinfrastructureiov1beta1.RedfishStatusLister {
+	return topohubinfrastructureiov1beta1.NewRedfishStatusLister(f.Informer().GetIndexer())
 }

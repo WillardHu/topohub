@@ -2,12 +2,13 @@ package redfish
 
 import (
 	"fmt"
-	"github.com/stmcginnis/gofish/redfish"
 	"reflect"
 
-	hoststatusData "github.com/infrastructure-io/topohub/pkg/hoststatus/data"
 	"github.com/stmcginnis/gofish"
+	"github.com/stmcginnis/gofish/redfish"
 	"go.uber.org/zap"
+
+	redfishstatusData "github.com/infrastructure-io/topohub/pkg/redfishstatus/data"
 )
 
 // Client 定义了 Redfish 客户端接口
@@ -15,6 +16,8 @@ type RefishClient interface {
 	Power(string) error
 	GetInfo() (map[string]string, error)
 	GetLog() ([]*redfish.LogEntry, error)
+	GetSystemsLogEntries() ([]*redfish.LogEntry, error)
+	GetManagersLogEntries() ([]*redfish.LogEntry, error)
 }
 
 // redfishClient 实现了 Client 接口
@@ -29,9 +32,9 @@ var _ RefishClient = (*redfishClient)(nil)
 var CacheClient = make(map[string]*redfishClient)
 
 // NewClient 创建一个新的 Redfish 客户端
-func NewClient(hostCon hoststatusData.HostConnectCon, log *zap.SugaredLogger) (RefishClient, error) {
+func NewClient(hostCon redfishstatusData.RedfishConnectCon, log *zap.SugaredLogger) (RefishClient, error) {
 
-	url := buildEndpoint(hostCon)
+	url := buildRedfishEndpoint(hostCon)
 	config := gofish.ClientConfig{
 		Endpoint:         url,
 		Username:         hostCon.Username,
@@ -70,11 +73,11 @@ func NewClient(hostCon hoststatusData.HostConnectCon, log *zap.SugaredLogger) (R
 	return c, nil
 }
 
-// buildEndpoint 根据 HostConnectCon 构建 Redfish 服务的端点 URL
-func buildEndpoint(hostCon hoststatusData.HostConnectCon) string {
+// buildRedfishEndpoint 根据 RedfishConnectCon 构建 Redfish 服务的端点 URL
+func buildRedfishEndpoint(redfishCon redfishstatusData.RedfishConnectCon) string {
 	protocol := "http"
-	if hostCon.Info.Https {
+	if redfishCon.Info.Https {
 		protocol = "https"
 	}
-	return fmt.Sprintf("%s://%s:%d", protocol, hostCon.Info.IpAddr, hostCon.Info.Port)
+	return fmt.Sprintf("%s://%s:%d", protocol, redfishCon.Info.IpAddr, redfishCon.Info.Port)
 }

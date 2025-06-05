@@ -1,4 +1,4 @@
-package hoststatus
+package redfishstatus
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 )
 
 // getSecretData 从 Secret 中获取用户名和密码
-func (c *hostStatusController) getSecretData(secretName, secretNamespace string) (string, string, error) {
+func (c *redfishStatusController) getSecretData(secretName, secretNamespace string) (string, string, error) {
 	c.log.Debugf("Attempting to get secret data for %s/%s", secretNamespace, secretName)
 
 	c.log.Debugf("Fetching secret from Kubernetes API for %s/%s", secretNamespace, secretName)
@@ -28,21 +28,21 @@ func (c *hostStatusController) getSecretData(secretName, secretNamespace string)
 	return username, password, nil
 }
 
-func formatHostStatusName(ip string) string {
+func formatRedfishStatusName(ip string) string {
 	return strings.ReplaceAll(ip, ".", "-")
 }
 
 // 比较两个Status的内容是否相同，忽略指针等问题
-func compareHostStatus(a, b topohubv1beta1.HostStatusStatus, logger *zap.SugaredLogger) bool {
+func compareRedfishStatus(a, b topohubv1beta1.RedfishStatusStatus, logger *zap.SugaredLogger) bool {
 	if a.Healthy != b.Healthy {
 		if logger != nil {
-			logger.Debugf("compareHostStatus Healthy changed: %v -> %v", b.Healthy, a.Healthy)
+			logger.Debugf("compareRedfishStatus Healthy changed: %v -> %v", b.Healthy, a.Healthy)
 		}
 		return false
 	}
 	if a.LastUpdateTime != b.LastUpdateTime {
 		if logger != nil {
-			logger.Debugf("compareHostStatus LastUpdateTime changed: %v -> %v", b.LastUpdateTime, a.LastUpdateTime)
+			logger.Debugf("compareRedfishStatus LastUpdateTime changed: %v -> %v", b.LastUpdateTime, a.LastUpdateTime)
 		}
 		return false
 	}
@@ -50,55 +50,43 @@ func compareHostStatus(a, b topohubv1beta1.HostStatusStatus, logger *zap.Sugared
 	// 比较Basic字段
 	if a.Basic.Type != b.Basic.Type {
 		if logger != nil {
-			logger.Debugf("compareHostStatus Basic.Type changed: %v -> %v", b.Basic.Type, a.Basic.Type)
+			logger.Debugf("compareRedfishStatus Basic.Type changed: %v -> %v", b.Basic.Type, a.Basic.Type)
 		}
 		return false
 	}
 	if a.Basic.IpAddr != b.Basic.IpAddr {
 		if logger != nil {
-			logger.Debugf("compareHostStatus Basic.IpAddr changed: %v -> %v", b.Basic.IpAddr, a.Basic.IpAddr)
+			logger.Debugf("compareRedfishStatus Basic.IpAddr changed: %v -> %v", b.Basic.IpAddr, a.Basic.IpAddr)
 		}
 		return false
 	}
 	if a.Basic.SecretName != b.Basic.SecretName {
 		if logger != nil {
-			logger.Debugf("compareHostStatus Basic.SecretName changed: %v -> %v", b.Basic.SecretName, a.Basic.SecretName)
+			logger.Debugf("compareRedfishStatus Basic.SecretName changed: %v -> %v", b.Basic.SecretName, a.Basic.SecretName)
 		}
 		return false
 	}
 	if a.Basic.SecretNamespace != b.Basic.SecretNamespace {
 		if logger != nil {
-			logger.Debugf("compareHostStatus Basic.SecretNamespace changed: %v -> %v", b.Basic.SecretNamespace, a.Basic.SecretNamespace)
+			logger.Debugf("compareRedfishStatus Basic.SecretNamespace changed: %v -> %v", b.Basic.SecretNamespace, a.Basic.SecretNamespace)
 		}
 		return false
 	}
 	if a.Basic.Https != b.Basic.Https {
 		if logger != nil {
-			logger.Debugf("compareHostStatus Basic.Https changed: %v -> %v", b.Basic.Https, a.Basic.Https)
+			logger.Debugf("compareRedfishStatus Basic.Https changed: %v -> %v", b.Basic.Https, a.Basic.Https)
 		}
 		return false
 	}
 	if a.Basic.Port != b.Basic.Port {
 		if logger != nil {
-			logger.Debugf("compareHostStatus Basic.Port changed: %v -> %v", b.Basic.Port, a.Basic.Port)
-		}
-		return false
-	}
-	if a.Basic.Mac != b.Basic.Mac {
-		if logger != nil {
-			logger.Debugf("compareHostStatus Basic.Mac changed: %v -> %v", b.Basic.Mac, a.Basic.Mac)
-		}
-		return false
-	}
-	if a.Basic.ActiveDhcpClient != b.Basic.ActiveDhcpClient {
-		if logger != nil {
-			logger.Debugf("compareHostStatus Basic.ActiveDhcpClient changed: %v -> %v", b.Basic.ActiveDhcpClient, a.Basic.ActiveDhcpClient)
+			logger.Debugf("compareRedfishStatus Basic.Port changed: %v -> %v", b.Basic.Port, a.Basic.Port)
 		}
 		return false
 	}
 	if a.Basic.ClusterName != b.Basic.ClusterName {
 		if logger != nil {
-			logger.Debugf("compareHostStatus Basic.ClusterName changed: %v -> %v", b.Basic.ClusterName, a.Basic.ClusterName)
+			logger.Debugf("compareRedfishStatus Basic.ClusterName changed: %v -> %v", b.Basic.ClusterName, a.Basic.ClusterName)
 		}
 		return false
 	}
@@ -106,7 +94,7 @@ func compareHostStatus(a, b topohubv1beta1.HostStatusStatus, logger *zap.Sugared
 	// 比较Info map中的内容
 	if len(a.Info) != len(b.Info) {
 		if logger != nil {
-			logger.Debugf("compareHostStatus Info length changed: %d -> %d", len(b.Info), len(a.Info))
+			logger.Debugf("compareRedfishStatus Info length changed: %d -> %d", len(b.Info), len(a.Info))
 		}
 		return false
 	}
@@ -114,9 +102,9 @@ func compareHostStatus(a, b topohubv1beta1.HostStatusStatus, logger *zap.Sugared
 		if v2, ok := b.Info[k]; !ok || v1 != v2 {
 			if logger != nil {
 				if !ok {
-					logger.Debugf("compareHostStatus Info added new key: %s = %s", k, v1)
+					logger.Debugf("compareRedfishStatus Info added new key: %s = %s", k, v1)
 				} else {
-					logger.Debugf("compareHostStatus Info key %s changed: %s -> %s", k, v2, v1)
+					logger.Debugf("compareRedfishStatus Info key %s changed: %s -> %s", k, v2, v1)
 				}
 			}
 			return false
@@ -126,7 +114,7 @@ func compareHostStatus(a, b topohubv1beta1.HostStatusStatus, logger *zap.Sugared
 	for k := range b.Info {
 		if _, ok := a.Info[k]; !ok {
 			if logger != nil {
-				logger.Debugf("compareHostStatus Info removed key: %s", k)
+				logger.Debugf("compareRedfishStatus Info removed key: %s", k)
 			}
 			return false
 		}

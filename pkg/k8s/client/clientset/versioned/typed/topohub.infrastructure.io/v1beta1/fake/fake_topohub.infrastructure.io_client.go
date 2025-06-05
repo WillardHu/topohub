@@ -23,8 +23,8 @@ func (c *FakeTopohubV1beta1) HostOperations() v1beta1.HostOperationInterface {
 	return newFakeHostOperations(c)
 }
 
-func (c *FakeTopohubV1beta1) HostStatuses() v1beta1.HostStatusInterface {
-	return newFakeHostStatuses(c)
+func (c *FakeTopohubV1beta1) RedfishStatuses() v1beta1.RedfishStatusInterface {
+	return newFakeRedfishStatuses(c)
 }
 
 func (c *FakeTopohubV1beta1) Subnets() v1beta1.SubnetInterface {
