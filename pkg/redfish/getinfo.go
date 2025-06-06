@@ -71,7 +71,7 @@ func (c *redfishClient) GetInfo() (map[string]string, error) {
 	setData(result, "HostName", system.HostName)
 	setData(result, "Manufacturer", system.Manufacturer)
 	setData(result, "PowerState", string(system.PowerState))
-	setData(result, "SyatemStatus", string(system.Status.Health))
+	setData(result, "SystemStatus", string(system.Status.Health))
 	setData(result, "RedfishVersion", service.RedfishVersion)
 	setData(result, "Vendor", service.Vendor)
 	// get supported reset types

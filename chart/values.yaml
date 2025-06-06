@@ -34,6 +34,15 @@ defaultConfig:
     # redfishStatusUpdateInterval defines the interval of redfishStatusUpdateInterval
     redfishStatusUpdateInterval: 60     
 
+  ssh:
+    # Port for the endpoint (default: 443)
+    port: 22
+    # Optional: Authentication credentials
+    username: "admin"
+    password: "admin"
+    # sshStatusUpdateInterval defines the interval of sshStatusUpdateInterval
+    sshStatusUpdateInterval: 60      
+
   dhcpServer:
     # interface defines the interface of dhcpServer, it should be a trunk mode interface
     interface: ""

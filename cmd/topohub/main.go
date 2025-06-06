@@ -29,11 +29,13 @@ import (
 	"github.com/infrastructure-io/topohub/pkg/log"
 	"github.com/infrastructure-io/topohub/pkg/redfishstatus"
 	"github.com/infrastructure-io/topohub/pkg/secret"
+	"github.com/infrastructure-io/topohub/pkg/sshstatus"
 	"github.com/infrastructure-io/topohub/pkg/subnet"
 	bindingipwebhook "github.com/infrastructure-io/topohub/pkg/webhook/bindingip"
 	hostendpointwebhook "github.com/infrastructure-io/topohub/pkg/webhook/hostendpoint"
 	hostoperationwebhook "github.com/infrastructure-io/topohub/pkg/webhook/hostoperation"
 	redfishstatuswebhook "github.com/infrastructure-io/topohub/pkg/webhook/redfishstatus"
+	sshstatuswebhook "github.com/infrastructure-io/topohub/pkg/webhook/sshstatus"
 	subnetwebhook "github.com/infrastructure-io/topohub/pkg/webhook/subnet"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -142,6 +144,12 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Setup SSHStatus webhook
+	if err = (&sshstatuswebhook.SSHStatusWebhook{}).SetupWebhookWithManager(mgr); err != nil {
+		log.Logger.Errorf("unable to create webhook %s: %v", "SSHStatus", err)
+		os.Exit(1)
+	}
+
 	// todo: subnet manager
 	subnetMgr := subnet.NewSubnetReconciler(*agentConfig, k8sClient)
 	if err = subnetMgr.SetupWithManager(mgr); err != nil {
@@ -190,6 +198,13 @@ func main() {
 
 	if err = hostOperationCtrl.SetupWithManager(mgr); err != nil {
 		log.Logger.Errorf("Unable to create hostoperation controller: %v", err)
+		os.Exit(1)
+	}
+
+	// Initialize sshstatus controller
+	sshStatusCtrl := sshstatus.NewSSHStatusController(k8sClient, agentConfig, mgr)
+	if err = sshStatusCtrl.SetupWithManager(mgr); err != nil {
+		log.Logger.Errorf("Unable to create sshstatus controller: %v", err)
 		os.Exit(1)
 	}
 
@@ -268,6 +283,9 @@ func main() {
 
 			// Stop redfishstatus controller
 			redfishStatusCtrl.Stop()
+
+			// Stop sshstatus controller
+			sshStatusCtrl.Stop()
 
 			// Cancel context to stop manager
 			cancel()

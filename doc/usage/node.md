@@ -216,6 +216,8 @@ spec:
   ipAddr: "${BMC_IP_ADDR}"
   # 设置改主机的 clusterName，便于进行分组管理
   clusterName: cluster1
+  # 指定端点类型
+  type: redfish
 EOF
 ```
 
@@ -247,6 +249,8 @@ spec:
   clusterName: cluster1
   secretName: "${NAME}"
   secretNamespace: "topohub"
+  # 指定端点类型
+  type: redfish
 EOF
 ```
 
@@ -267,6 +271,55 @@ device10                cluster1        true      10.64.64.42      hostendpoint 
 > 对于老的 BMC 系统，它的 tls 版本很低，证书套件很老，导致 gofish 无法正常建立链接
 > 更新了 secret 账户和密码，会立即生效
 > 目前版本，只支持新建或者删除 HostEndpoint，不支持编辑
+
+
+### 手动创建主机对象来管理 SSH 主机
+对于已经分配 IP 地址支持 SSH 协议的主机，您可以使用以下方式创建主机对象
+
+注意: SSH 认证信息存储在 secret 中，需要创建 secret 对象来存储认证信息，参考如下 
+
+```bash
+NAME=sshtest
+USERNAME=root
+PASSWORD=xxxxx
+SSH_IP_ADDR=10.2.69.51
+
+# 创建Secret和HostEndpoint
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ${NAME}
+  namespace: topohub
+type: Opaque
+data:
+  username: $(echo -n "${USERNAME}" | base64)
+  password: $(echo -n "${PASSWORD}" | base64)
+---
+apiVersion: topohub.infrastructure.io/v1beta1
+kind: HostEndpoint
+metadata:
+  name: ${NAME}
+spec:
+  ipAddr: "${SSH_IP_ADDR}"
+  # 设置该主机的 clusterName，便于进行分组管理
+  clusterName: sshcluster
+  # 指定端点类型
+  type: ssh
+  port: 22
+  secretName: "${NAME}"
+  secretNamespace: topohub
+EOF
+```
+
+创建主机对象后，SSH agent 会自动生成对应的 sshstatus 对象，并开始同步主机的 ssh 信息：
+
+```bash
+# 查看所有主机的状态，确认新添加的主机状态为 HEALTHY
+~#  kubectl get sshstatus
+NAME      CLUSTERNAME   HEALTHY   IPADDR       TYPE   WARNING   AGE
+sshtest   sshcluster    true      10.2.69.51   ssh    0         29m
+```
 
 ### BMC 主机电源操作
 

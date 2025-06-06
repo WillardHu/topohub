@@ -17,6 +17,10 @@ type HostOperationListerExpansion interface{}
 // RedfishStatusLister.
 type RedfishStatusListerExpansion interface{}
 
+// SSHStatusListerExpansion allows custom methods to be added to
+// SSHStatusLister.
+type SSHStatusListerExpansion interface{}
+
 // SubnetListerExpansion allows custom methods to be added to
 // SubnetLister.
 type SubnetListerExpansion interface{}
