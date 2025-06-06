@@ -35,6 +35,9 @@ const (
 
 	// KindBindingIp is the kind name for BindingIp resource
 	KindBindingIp = "BindingIp"
+
+	// KindSSHStatus is the kind name for SSHStatus resource
+	KindSSHStatus = "SSHStatus"
 )
 
 var SchemeGroupVersion = schema.GroupVersion{Group: GroupName, Version: Version}
@@ -65,4 +68,5 @@ func init() {
 	SchemeBuilder.Register(&RedfishStatus{}, &RedfishStatusList{})
 	SchemeBuilder.Register(&HostOperation{}, &HostOperationList{})
 	SchemeBuilder.Register(&BindingIp{}, &BindingIpList{})
+	SchemeBuilder.Register(&SSHStatus{}, &SSHStatusList{})
 }
