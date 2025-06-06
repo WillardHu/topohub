@@ -23,5 +23,5 @@ spec:
   secretNamespace: "bmc"
   # Communication settings (optional)
   https: true  # Defaults to true if not specified
-  port: 443     
+  port: 443
 EOF

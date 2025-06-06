@@ -4,17 +4,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const (
-	LabelIPAddr       = GroupName + "/ipAddr"
-	LabelClientMode   = GroupName + "/mode"
-	LabelClientActive = GroupName + "/dhcp-ip-active"
-	LabelClusterName  = GroupName + "/cluster-name"
-	LabelSubnetName   = GroupName + "/subnet-name"
-
-	HostTypeDHCP     = "dhcp"
-	HostTypeEndpoint = "hostendpoint"
-)
-
 // +genclient
 // +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -27,14 +16,14 @@ const (
 // +kubebuilder:printcolumn:name="WARNING",type="string",JSONPath=".status.log.warningLogAccount"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 
-type HostStatus struct {
+type RedfishStatus struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Status HostStatusStatus `json:"status,omitempty"`
+	Status RedfishStatusStatus `json:"status,omitempty"`
 }
 
-type HostStatusStatus struct {
+type RedfishStatusStatus struct {
 	Healthy        bool              `json:"healthy"`
 	LastUpdateTime string            `json:"lastUpdateTime"`
 	Basic          BasicInfo         `json:"basic"`
@@ -75,9 +64,9 @@ type BasicInfo struct {
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type HostStatusList struct {
+type RedfishStatusList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []HostStatus `json:"items"`
+	Items []RedfishStatus `json:"items"`
 }

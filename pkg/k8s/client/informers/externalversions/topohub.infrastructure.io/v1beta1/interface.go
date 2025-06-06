@@ -15,8 +15,8 @@ type Interface interface {
 	HostEndpoints() HostEndpointInformer
 	// HostOperations returns a HostOperationInformer.
 	HostOperations() HostOperationInformer
-	// HostStatuses returns a HostStatusInformer.
-	HostStatuses() HostStatusInformer
+	// RedfishStatuses returns a RedfishStatusInformer.
+	RedfishStatuses() RedfishStatusInformer
 	// Subnets returns a SubnetInformer.
 	Subnets() SubnetInformer
 }
@@ -42,9 +42,9 @@ func (v *version) HostOperations() HostOperationInformer {
 	return &hostOperationInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }
 
-// HostStatuses returns a HostStatusInformer.
-func (v *version) HostStatuses() HostStatusInformer {
-	return &hostStatusInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
+// RedfishStatuses returns a RedfishStatusInformer.
+func (v *version) RedfishStatuses() RedfishStatusInformer {
+	return &redfishStatusInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }
 
 // Subnets returns a SubnetInformer.

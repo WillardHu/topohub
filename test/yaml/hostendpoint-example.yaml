@@ -12,7 +12,7 @@ spec:
   secretNamespace: "topohub"
   # 可选：默认为 true
   https: true
-  # 可选：默认为 80
+  # 可选：默认为 443
   port: 443
 ---
 # 对应的 Secret 示例

@@ -27,8 +27,8 @@ const (
 	// KindHostEndpoint is the kind name for HostEndpoint resource
 	KindHostEndpoint = "HostEndpoint"
 
-	// KindHostStatus is the kind name for HostStatus resource
-	KindHostStatus = "HostStatus"
+	// KindredfishStatus is the kind name for redfishStatus resource
+	KindredfishStatus = "redfishStatus"
 
 	// KindHostOperation is the kind name for HostOperation resource
 	KindHostOperation = "HostOperation"
@@ -62,7 +62,7 @@ var (
 func init() {
 	SchemeBuilder.Register(&Subnet{}, &SubnetList{})
 	SchemeBuilder.Register(&HostEndpoint{}, &HostEndpointList{})
-	SchemeBuilder.Register(&HostStatus{}, &HostStatusList{})
+	SchemeBuilder.Register(&RedfishStatus{}, &RedfishStatusList{})
 	SchemeBuilder.Register(&HostOperation{}, &HostOperationList{})
 	SchemeBuilder.Register(&BindingIp{}, &BindingIpList{})
 }

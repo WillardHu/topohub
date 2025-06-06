@@ -6,44 +6,44 @@ import (
 	"github.com/infrastructure-io/topohub/pkg/log"
 )
 
-// HostConnectCon 定义每一个 存量的 hoststatus 网络连接信息
-type HostConnectCon struct {
+// RedfishConnectCon 定义每一个 存量的 redfishstatus 网络连接信息
+type RedfishConnectCon struct {
 	Info     *v1beta1.BasicInfo
 	Username string
 	Password string
 	DhcpHost bool
 }
 
-// HostCache 定义主机缓存结构
-type HostCache struct {
+// RedfishCache 定义主机缓存结构
+type RedfishCache struct {
 	lock lock.RWMutex
-	data map[string]*HostConnectCon
+	data map[string]*RedfishConnectCon
 }
 
-var HostCacheDatabase *HostCache
+var RedfishCacheDatabase *RedfishCache
 
 func init() {
-	HostCacheDatabase = &HostCache{
-		data: make(map[string]*HostConnectCon),
+	RedfishCacheDatabase = &RedfishCache{
+		data: make(map[string]*RedfishConnectCon),
 	}
 }
 
 // Add 添加或更新缓存中的主机数据
-func (c *HostCache) Add(name string, data HostConnectCon) {
+func (c *RedfishCache) Add(name string, data RedfishConnectCon) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 	c.data[name] = &data
 }
 
 // Delete 从缓存中删除指定主机数据
-func (c *HostCache) Delete(name string) {
+func (c *RedfishCache) Delete(name string) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 	delete(c.data, name)
 }
 
 // Get 获取指定主机的数据
-func (c *HostCache) Get(name string) *HostConnectCon {
+func (c *RedfishCache) Get(name string) *RedfishConnectCon {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 	data, exists := c.data[name]
@@ -55,12 +55,12 @@ func (c *HostCache) Get(name string) *HostConnectCon {
 }
 
 // GetAll 返回缓存中的所有主机数据
-func (c *HostCache) GetAll() map[string]HostConnectCon {
+func (c *RedfishCache) GetAll() map[string]RedfishConnectCon {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 
 	// 创建一个新的 map 来存储所有数据的副本
-	result := make(map[string]HostConnectCon, len(c.data))
+	result := make(map[string]RedfishConnectCon, len(c.data))
 	for k, v := range c.data {
 		result[k] = *v
 	}
@@ -69,12 +69,12 @@ func (c *HostCache) GetAll() map[string]HostConnectCon {
 }
 
 // GetDhcpClientInfo 返回缓存中的所有DHCP主机数据
-func (c *HostCache) GetDhcpClientInfo() map[string]HostConnectCon {
+func (c *RedfishCache) GetDhcpClientInfo() map[string]RedfishConnectCon {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 
 	// 创建一个新的 map 来存储所有数据的副本
-	result := make(map[string]HostConnectCon, len(c.data))
+	result := make(map[string]RedfishConnectCon, len(c.data))
 	for k, v := range c.data {
 		if v.DhcpHost {
 			result[k] = *v
@@ -85,12 +85,12 @@ func (c *HostCache) GetDhcpClientInfo() map[string]HostConnectCon {
 }
 
 // GetStaticClientInfo 返回缓存中的所有静态主机数据
-func (c *HostCache) GetStaticClientInfo() map[string]HostConnectCon {
+func (c *RedfishCache) GetStaticClientInfo() map[string]RedfishConnectCon {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 
 	// 创建一个新的 map 来存储所有数据的副本
-	result := make(map[string]HostConnectCon, len(c.data))
+	result := make(map[string]RedfishConnectCon, len(c.data))
 	for k, v := range c.data {
 		if !v.DhcpHost {
 			result[k] = *v
@@ -100,7 +100,7 @@ func (c *HostCache) GetStaticClientInfo() map[string]HostConnectCon {
 	return result
 }
 
-func (c *HostCache) UpdateSecet(secretName, secretNamespace, username, password string) []string {
+func (c *RedfishCache) UpdateSecet(secretName, secretNamespace, username, password string) []string {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 
@@ -112,12 +112,12 @@ func (c *HostCache) UpdateSecet(secretName, secretNamespace, username, password 
 			if v.Username != username {
 				v.Username = username
 				changed = true
-				log.Logger.Infof("update host status username for host %s", v.Info.IpAddr)
+				log.Logger.Infof("update redfish status username for host %s", v.Info.IpAddr)
 			}
 			if v.Password != password {
 				v.Password = password
 				changed = true
-				log.Logger.Infof("update host status password for host %s", v.Info.IpAddr)
+				log.Logger.Infof("update redfish status password for host %s", v.Info.IpAddr)
 			}
 		}
 		if changed {

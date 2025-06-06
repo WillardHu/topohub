@@ -4,14 +4,14 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: (unknown)
-  name: hoststatuses.topohub.infrastructure.io
+  name: redfishstatuses.topohub.infrastructure.io
 spec:
   group: topohub.infrastructure.io
   names:
-    kind: HostStatus
-    listKind: HostStatusList
-    plural: hoststatuses
-    singular: hoststatus
+    kind: RedfishStatus
+    listKind: RedfishStatusList
+    plural: redfishstatuses
+    singular: redfishstatus
   scope: Cluster
   versions:
   - additionalPrinterColumns:
