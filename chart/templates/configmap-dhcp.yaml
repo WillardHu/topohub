@@ -48,7 +48,7 @@ data:
     dhcp-option=67,http://{{ "{{ .SelfIP }}" }}/ztp/ztp.json
     {{ "{{ end }}" }}
 
-    conf-file={{ "{{ .HostIpBindingsConfigPath }}" }}
+    dhcp-hostsfile={{ "{{ .HostIpBindingsConfigPath }}" }}
 
     # Additional options
     # Disable DNS server functionality

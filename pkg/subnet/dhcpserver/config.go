@@ -276,10 +276,10 @@ func (s *dhcpServer) UpdateDhcpBindings() error {
 	var finalLines []string
 	for ip, item := range s.currentManualBindingClients {
 		s.log.Debugf("adding new dhcp-host binding for IP %s, MAC %s", ip, item.MAC)
+		line := fmt.Sprintf("%s,%s", item.MAC, ip)
 		if len(item.Hostname) > 0 {
-			finalLines = append(finalLines, "# hostname "+item.Hostname)
+			line = fmt.Sprintf("%s,%s,%s", item.MAC, ip, item.Hostname)
 		}
-		line := fmt.Sprintf("dhcp-host=%s,%s", item.MAC, ip)
 		finalLines = append(finalLines, line)
 	}
 
