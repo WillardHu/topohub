@@ -68,19 +68,10 @@ func (c *redfishClient) Power(bootCmd string) error {
 				BootSourceOverrideEnabled: redfish.OnceBootSourceOverrideEnabled,
 			}
 			c.logger.Infof("pxe reboot %s for System: %+v \n", c.config.Endpoint, system.Name)
-			err = system.SetBoot(bootOverride)
-			if err != nil {
-				return fmt.Errorf("failed to set boot option error:%+v", err)
-			}
 
-			// try to use GracefulRestart first
-			if strings.Contains(resetTypes, string(redfish.GracefulRestartResetType)) {
-				c.logger.Infof("using GracefulRestart for System: %s", system.Name)
-				err = system.Reset(redfish.GracefulRestartResetType)
-			} else {
-				// try to use ForceRestart
-				c.logger.Infof("using ForceRestart for System: %s", system.Name)
-				err = system.Reset(redfish.ForceRestartResetType)
+			err = c.pxeRebootWithRetry(system, bootOverride, resetTypes)
+			if err != nil {
+				return fmt.Errorf("failed to set boot options: %+v", err)
 			}
 
 		default:
@@ -94,4 +85,68 @@ func (c *redfishClient) Power(bootCmd string) error {
 	}
 
 	return nil
+}
+
+// Lenovo machine Redifish requires an ETag,when the ETag does not match, it may report an error, so add a retry
+func (c *redfishClient) pxeRebootWithRetry(system *redfish.ComputerSystem, bootOverride redfish.Boot, resetTypes string) error {
+	// Maximum retry attempts
+	maxRetries := 3
+	var lastErr error
+
+	for i := 0; i < maxRetries; i++ {
+		// If this is not the first attempt, refresh the system info to update ETag
+		if i > 0 {
+			c.logger.Infof("Retry attempt %d for setting PXE boot...", i)
+			// Refresh system info to update ETag
+			systems, refreshErr := c.client.Service.Systems()
+			if refreshErr != nil {
+				return fmt.Errorf("failed to refresh system info: %+v", refreshErr)
+			}
+			if len(systems) == 0 {
+				return fmt.Errorf("no systems found during refresh")
+			}
+
+			// find the system with the same ID
+			originalID := system.ID
+			found := false
+			for _, s := range systems {
+				if s.ID == originalID {
+					system = s
+					found = true
+					break
+				}
+			}
+
+			if !found {
+				return fmt.Errorf("system %s not found after refresh", originalID)
+			}
+		}
+
+		// set boot options
+		if err := system.SetBoot(bootOverride); err != nil {
+			c.logger.Errorf("Failed to set boot options: %v, will retry", err)
+			lastErr = err
+			continue
+		}
+
+		// restart system
+		var restartType redfish.ResetType
+		if strings.Contains(resetTypes, string(redfish.GracefulRestartResetType)) {
+			restartType = redfish.GracefulRestartResetType
+		} else {
+			restartType = redfish.ForceRestartResetType
+		}
+
+		c.logger.Infof("using %s restart type for System: %s", restartType, system.Name)
+		if err := system.Reset(restartType); err != nil {
+			c.logger.Errorf("Reset failed after setting boot options: %v, will retry", err)
+			lastErr = err
+			continue
+		}
+
+		// If we get here, it means SetBoot and Reset both succeeded
+		return nil
+	}
+
+	return fmt.Errorf("failed to set boot options after %d retries: %+v", maxRetries, lastErr)
 }
