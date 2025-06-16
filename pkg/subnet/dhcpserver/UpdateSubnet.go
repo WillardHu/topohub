@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"time"
 
+	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -102,67 +103,7 @@ func (s *dhcpServer) updateSubnetWithRetry() error {
 				updated.Status.DhcpStatus = &topohubv1beta1.DhcpStatusSpec{}
 			}
 
-			// GetDhcpClient returns a string representation of all DHCP clients with their binding status
-			updateClientFunc := func(dhcpClient, manualBindClients map[string]*DhcpClientInfo) (string, uint64) {
-
-				clientMap := make(map[string]clientInfo)
-				counter := uint64(0)
-
-				// first add all manual bind clients
-				var expireTime string
-				for ip, client := range manualBindClients {
-					expireTime = ""
-					if !client.DhcpExpireTime.IsZero() {
-						expireTime = client.DhcpExpireTime.Format(time.RFC3339)
-					}
-					clientMap[ip] = clientInfo{
-						Mac:            client.MAC,
-						IsBound:        true,
-						IsAllocated:    false,
-						Hostname:       client.Hostname,
-						DhcpExpireTime: expireTime,
-					}
-					counter++
-				}
-				// then add all dhcp clients
-				for ip, client := range dhcpClient {
-					// if the client is already in manual bind clients, update it
-					if existing, ok := clientMap[ip]; ok {
-						// if mac is not the same, output error
-						if existing.Mac != client.MAC {
-							s.log.Errorf("ip %s is already bound to mac %s, but now mac %s", ip, existing.Mac, client.MAC)
-						}
-						existing.Mac = client.MAC
-						existing.IsAllocated = true
-						existing.Hostname = client.Hostname
-						existing.DhcpExpireTime = client.DhcpExpireTime.Format(time.RFC3339)
-						clientMap[ip] = existing
-					} else {
-						clientMap[ip] = clientInfo{
-							Mac:            client.MAC,
-							IsBound:        false,
-							IsAllocated:    true,
-							Hostname:       client.Hostname,
-							DhcpExpireTime: client.DhcpExpireTime.Format(time.RFC3339),
-						}
-						counter++
-					}
-				}
-
-				if len(clientMap) == 0 {
-					return "{}", 0
-				}
-
-				// Convert map to JSON string
-				jsonBytes, err := json.Marshal(clientMap)
-				if err != nil {
-					s.log.Errorf("failed to marshal client map to JSON: %v", err)
-					return "{}", 0
-				}
-
-				return string(jsonBytes), counter
-			}
-			clientDetails, usedIpAmount := updateClientFunc(s.currentLeaseClients, s.currentManualBindingClients)
+			clientDetails, usedIpAmount := updateClientFunc(s.log, s.currentLeaseClients, s.currentManualBindingClients)
 			updated.Status.DhcpClientDetails = clientDetails
 			updated.Status.DhcpStatus.DhcpIpAvailableAmount = totalIPs - usedIpAmount
 			updated.Status.DhcpStatus.DhcpIpTotalAmount = totalIPs
@@ -185,7 +126,7 @@ func (s *dhcpServer) updateSubnetWithRetry() error {
 				})
 			}
 
-			if reflect.DeepEqual(current.Status.DhcpStatus, updated.Status.DhcpStatus) {
+			if reflect.DeepEqual(current.Status, updated.Status) {
 				return nil
 			}
 
@@ -197,4 +138,65 @@ func (s *dhcpServer) updateSubnetWithRetry() error {
 			s.log.Infof("succeeded to update subnet status for %s: %+v", updated.ObjectMeta.Name, updated.Status.DhcpStatus)
 			return nil
 		})
+}
+
+// updateClientFunc returns a string representation of all DHCP clients with their binding status
+// and the count of used IP addresses
+func updateClientFunc(log *zap.SugaredLogger, dhcpClient, manualBindClients map[string]*DhcpClientInfo) (string, uint64) {
+	clientMap := make(map[string]clientInfo)
+	counter := uint64(0)
+
+	// first add all manual bind clients
+	var expireTime string
+	for ip, client := range manualBindClients {
+		expireTime = ""
+		if !client.DhcpExpireTime.IsZero() {
+			expireTime = client.DhcpExpireTime.Format(time.RFC3339)
+		}
+		clientMap[ip] = clientInfo{
+			Mac:            client.MAC,
+			IsBound:        true,
+			IsAllocated:    false,
+			Hostname:       client.Hostname,
+			DhcpExpireTime: expireTime,
+		}
+		counter++
+	}
+	// then add all dhcp clients
+	for ip, client := range dhcpClient {
+		// if the client is already in manual bind clients, update it
+		if existing, ok := clientMap[ip]; ok {
+			// if mac is not the same, output error
+			if existing.Mac != client.MAC {
+				log.Errorf("ip %s is already bound to mac %s, but now mac %s", ip, existing.Mac, client.MAC)
+			}
+			existing.Mac = client.MAC
+			existing.IsAllocated = true
+			existing.Hostname = client.Hostname
+			existing.DhcpExpireTime = client.DhcpExpireTime.Format(time.RFC3339)
+			clientMap[ip] = existing
+		} else {
+			clientMap[ip] = clientInfo{
+				Mac:            client.MAC,
+				IsBound:        false,
+				IsAllocated:    true,
+				Hostname:       client.Hostname,
+				DhcpExpireTime: client.DhcpExpireTime.Format(time.RFC3339),
+			}
+			counter++
+		}
+	}
+
+	if len(clientMap) == 0 {
+		return "{}", 0
+	}
+
+	// Convert map to JSON string
+	jsonBytes, err := json.Marshal(clientMap)
+	if err != nil {
+		log.Errorf("failed to marshal client map to JSON: %v", err)
+		return "{}", 0
+	}
+
+	return string(jsonBytes), counter
 }
