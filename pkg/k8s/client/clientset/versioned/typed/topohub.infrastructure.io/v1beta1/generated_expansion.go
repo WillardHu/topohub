@@ -11,4 +11,6 @@ type HostOperationExpansion interface{}
 
 type RedfishStatusExpansion interface{}
 
+type SSHStatusExpansion interface{}
+
 type SubnetExpansion interface{}

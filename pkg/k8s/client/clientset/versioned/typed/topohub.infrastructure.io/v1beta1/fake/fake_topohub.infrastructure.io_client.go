@@ -27,6 +27,10 @@ func (c *FakeTopohubV1beta1) RedfishStatuses() v1beta1.RedfishStatusInterface {
 	return newFakeRedfishStatuses(c)
 }
 
+func (c *FakeTopohubV1beta1) SSHStatuses() v1beta1.SSHStatusInterface {
+	return newFakeSSHStatuses(c)
+}
+
 func (c *FakeTopohubV1beta1) Subnets() v1beta1.SubnetInterface {
 	return newFakeSubnets(c)
 }

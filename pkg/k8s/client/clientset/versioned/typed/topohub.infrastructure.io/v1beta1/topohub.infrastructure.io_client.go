@@ -18,6 +18,7 @@ type TopohubV1beta1Interface interface {
 	HostEndpointsGetter
 	HostOperationsGetter
 	RedfishStatusesGetter
+	SSHStatusesGetter
 	SubnetsGetter
 }
 
@@ -36,6 +37,10 @@ func (c *TopohubV1beta1Client) HostOperations() HostOperationInterface {
 
 func (c *TopohubV1beta1Client) RedfishStatuses() RedfishStatusInterface {
 	return newRedfishStatuses(c)
+}
+
+func (c *TopohubV1beta1Client) SSHStatuses() SSHStatusInterface {
+	return newSSHStatuses(c)
 }
 
 func (c *TopohubV1beta1Client) Subnets() SubnetInterface {
