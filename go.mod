@@ -11,6 +11,8 @@ require (
 	github.com/stmcginnis/gofish v0.20.0
 	github.com/vishvananda/netlink v1.3.0
 	go.uber.org/zap v1.27.0
+	golang.org/x/crypto v0.38.0
+	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.32.0
 	k8s.io/apimachinery v0.32.0
 	k8s.io/client-go v0.32.0
@@ -78,7 +80,6 @@ require (
 	google.golang.org/protobuf v1.36.0 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/apiextensions-apiserver v0.32.0 // indirect
 	k8s.io/gengo/v2 v2.0.0-20240911193312-2b36238f13e9 // indirect

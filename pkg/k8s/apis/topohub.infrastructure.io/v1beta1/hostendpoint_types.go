@@ -4,6 +4,14 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// HostEndpoint type constants
+const (
+	// EndpointTypeRedfish represents Redfish management interface
+	EndpointTypeRedfish = "redfish"
+	// EndpointTypeSSH represents SSH management interface
+	EndpointTypeSSH = "ssh"
+)
+
 // +genclient
 // +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

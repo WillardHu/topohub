@@ -40,6 +40,8 @@ rules:
   - subnets/status
   - bindingips
   - bindingips/status
+  - sshstatuses
+  - sshstatuses/status
   verbs:
   - "*"
 - apiGroups:

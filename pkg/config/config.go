@@ -4,13 +4,12 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strconv"
-	"strings"
 
 	"os/exec"
 
 	"github.com/infrastructure-io/topohub/pkg/log"
 	"github.com/infrastructure-io/topohub/pkg/tools"
+	"gopkg.in/yaml.v2"
 )
 
 // AgentConfig represents the agent configuration
@@ -49,84 +48,60 @@ type AgentConfig struct {
 	RedfishSecretName           string
 	RedfishSecretNamespace      string
 	RedfishStatusUpdateInterval int
+	SSHStatusUpdateInterval     int
 	// DHCP server configuration
 	DhcpServerInterface string
+	HttpEnabled         bool
+	HttpPort            string
+}
 
-	HttpEnabled bool
-	HttpPort    string
+// FeatureConfig represents the feature configuration loaded from YAML
+type FeatureConfig struct {
+	RedfishPort                 int    `yaml:"redfishPort"`
+	RedfishHttps                bool   `yaml:"redfishHttps"`
+	RedfishSecretname           string `yaml:"redfishSecretname"`
+	RedfishSecretNamespace      string `yaml:"redfishSecretNamespace"`
+	RedfishStatusUpdateInterval int    `yaml:"redfishStatusUpdateInterval"`
+	SSHStatusUpdateInterval     int    `yaml:"sshStatusUpdateInterval"`
+	DhcpServerInterface         string `yaml:"dhcpServerInterface"`
+	HttpServerPort              string `yaml:"httpServerPort"`
+	HttpServerEnabled           bool   `yaml:"httpServerEnabled"`
 }
 
 // LoadFeatureConfig loads feature configuration from the config file
 func (c *AgentConfig) loadFeatureConfig() error {
-	// Read redfishPort
-	portBytes, err := os.ReadFile(filepath.Join(c.FeatureConfigPath, "redfishPort"))
+	// Read the feature-config.yaml file
+	configPath := filepath.Join(c.FeatureConfigPath, "feature-config.yaml")
+	configData, err := os.ReadFile(configPath)
 	if err != nil {
-		return fmt.Errorf("failed to read redfishPort: %v", err)
+		return fmt.Errorf("failed to read feature-config.yaml: %v", err)
 	}
-	port, err := strconv.Atoi(string(portBytes))
-	if err != nil {
-		return fmt.Errorf("invalid redfishPort value: %v", err)
-	}
-	c.RedfishPort = port
 
-	// Read redfishHttps
-	httpsBytes, err := os.ReadFile(filepath.Join(c.FeatureConfigPath, "redfishHttps"))
-	if err != nil {
-		return fmt.Errorf("failed to read redfishHttps: %v", err)
+	// Parse YAML configuration
+	var featureConfig FeatureConfig
+	if err := yaml.Unmarshal(configData, &featureConfig); err != nil {
+		return fmt.Errorf("failed to parse feature-config.yaml: %v", err)
 	}
-	c.RedfishHttps = string(httpsBytes) == "true"
 
-	// Read redfishSecretname
-	secretNameBytes, err := os.ReadFile(filepath.Join(c.FeatureConfigPath, "redfishSecretname"))
-	if err != nil {
-		return fmt.Errorf("failed to read redfishSecretname: %v", err)
-	}
-	c.RedfishSecretName = string(secretNameBytes)
+	c.RedfishPort = featureConfig.RedfishPort
+	c.RedfishHttps = featureConfig.RedfishHttps
+	c.RedfishSecretName = featureConfig.RedfishSecretname
+	c.RedfishSecretNamespace = featureConfig.RedfishSecretNamespace
+	c.RedfishStatusUpdateInterval = featureConfig.RedfishStatusUpdateInterval
+	c.SSHStatusUpdateInterval = featureConfig.SSHStatusUpdateInterval
+	c.DhcpServerInterface = featureConfig.DhcpServerInterface
+	c.HttpPort = featureConfig.HttpServerPort
+	c.HttpEnabled = featureConfig.HttpServerEnabled
 
-	// Read redfishSecretNamespace
-	secretNsBytes, err := os.ReadFile(filepath.Join(c.FeatureConfigPath, "redfishSecretNamespace"))
-	if err != nil {
-		return fmt.Errorf("failed to read redfishSecretNamespace: %v", err)
-	}
-	c.RedfishSecretNamespace = string(secretNsBytes)
-
-	// Read redfishStatusUpdateInterval
-	intervalBytes, err := os.ReadFile(filepath.Join(c.FeatureConfigPath, "redfishStatusUpdateInterval"))
-	if err != nil {
-		return fmt.Errorf("failed to read redfishStatusUpdateInterval: %v", err)
-	}
-	interval, err := strconv.Atoi(string(intervalBytes))
-	if err != nil {
-		return fmt.Errorf("invalid redfishStatusUpdateInterval value: %v", err)
-	}
-	c.RedfishStatusUpdateInterval = interval
-
-	// Read dhcpServerInterface
-	interfaceBytes, err := os.ReadFile(filepath.Join(c.FeatureConfigPath, "dhcpServerInterface"))
-	if err != nil {
-		return fmt.Errorf("failed to read dhcpServerInterface: %v", err)
-	}
-	c.DhcpServerInterface = string(interfaceBytes)
+	// 验证必要的字段
 	if len(c.DhcpServerInterface) == 0 {
 		return fmt.Errorf("dhcpServerInterface is empty")
 	}
-	// Validate interface exists on the system
+
+	// 验证接口是否存在
 	if err := tools.ValidateInterfaceExists(c.DhcpServerInterface); err != nil {
 		return fmt.Errorf("failed to find dhcpServer Interface %s: %v", c.DhcpServerInterface, err)
 	}
-
-	// http
-	httpPortBytes, err := os.ReadFile(filepath.Join(c.FeatureConfigPath, "httpServerPort"))
-	if err != nil {
-		return fmt.Errorf("failed to read httpServerPort: %v", err)
-	}
-	c.HttpPort = string(httpPortBytes)
-
-	httpEnabledBytes, err := os.ReadFile(filepath.Join(c.FeatureConfigPath, "httpServerEnabled"))
-	if err != nil {
-		return fmt.Errorf("failed to read httpServerEnabled: %v", err)
-	}
-	c.HttpEnabled = strings.ToLower(string(httpEnabledBytes)) == "true"
 
 	return nil
 }
