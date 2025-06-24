@@ -228,7 +228,7 @@ func (c *sshStatusController) processSSHStatus(sshStatus *topohubv1beta1.SSHStat
 					Healthy:        false,
 					LastUpdateTime: time.Now().UTC().Format(time.RFC3339),
 					Basic: topohubv1beta1.SSHBasicInfo{
-						Type:        topohubv1beta1.HostTypeSSH,
+						Type:        topohubv1beta1.HostTypeEndpoint,
 						IpAddr:      hostEndpoint.Spec.IPAddr,
 						Port:        *hostEndpoint.Spec.Port,
 						ClusterName: clusterName,
