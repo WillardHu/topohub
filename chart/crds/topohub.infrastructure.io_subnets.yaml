@@ -100,7 +100,6 @@ spec:
                     - enabled
                     type: object
                 required:
-                - enableDhcpTrustedOnly
                 - enablePxe
                 - enableZtp
                 - syncRedfishstatus
