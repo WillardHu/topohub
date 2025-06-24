@@ -57,6 +57,7 @@ func (s *dhcpServer) generateDnsmasqConfig() error {
 		LogFile                  string
 		EnablePxe                bool
 		EnableZtp                bool
+		EnableDhcpTrustedOnly    bool
 		Name                     string
 		SelfIP                   string
 		TftpServerDir            string
@@ -71,6 +72,7 @@ func (s *dhcpServer) generateDnsmasqConfig() error {
 		LogFile:                  s.logPath,
 		EnablePxe:                s.subnet.Spec.Feature.EnablePxe,
 		EnableZtp:                s.subnet.Spec.Feature.EnableZtp,
+		EnableDhcpTrustedOnly:    s.subnet.Spec.Feature.EnableDhcpTrustedOnly,
 		Name:                     s.subnet.Name,
 		SelfIP:                   strings.Split(s.subnet.Spec.Interface.IPv4, "/")[0],
 		TftpServerDir:            s.config.StoragePathTftp,
@@ -276,10 +278,12 @@ func (s *dhcpServer) UpdateDhcpBindings() error {
 	var finalLines []string
 	for ip, item := range s.currentManualBindingClients {
 		s.log.Debugf("adding new dhcp-host binding for IP %s, MAC %s", ip, item.MAC)
-		line := fmt.Sprintf("%s,%s", item.MAC, ip)
+		// Format: MAC,id:*,set:trusted,IPAdd commentMore actions
+		var line string
 		if len(item.Hostname) > 0 {
-			line = fmt.Sprintf("%s,%s,%s", item.MAC, ip, item.Hostname)
+			finalLines = append(finalLines, "# hostname "+item.Hostname)
 		}
+		line = fmt.Sprintf("%s,id:*,set:trusted,%s", item.MAC, ip)
 		finalLines = append(finalLines, line)
 	}
 
