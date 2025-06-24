@@ -85,6 +85,7 @@ type FeatureSpec struct {
 
 	// Enable DHCP trusted only mode (dhcp-ignore=tag:!trusted)
 	// +kubebuilder:default=false
+	// +optional
 	EnableDhcpTrustedOnly bool `json:"enableDhcpTrustedOnly"`
 }
 
