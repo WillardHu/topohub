@@ -56,13 +56,18 @@ func main() {
 	probePort := flag.String("health-probe-port", "8081", "The address the probe endpoint binds to.")
 	webhookPort := flag.String("webhook-port", "8082", "The address the probe endpoint binds to.")
 	metricsPort := flag.String("metrics-port", "8083", "The address the metric endpoint binds to.")
-	pyroscopeAddress := flag.String("pyroscope-address", "", "The address the pyroscope endpoint binds to.")
+	pyroscopeAddress := flag.String("pyroscope-address", "", "The server address where the pyroscope data is pushed.")
 	pyroscopeTag := flag.String("pyroscope-tag", "", "The tag used for pyroscope.")
+	pprofAddress := flag.String("pprof-address", "", "The address the pprof endpoint binds to.")
+	pprofPort := flag.String("pprof-port", "", "The port used for pprof")
 	flag.Parse()
 
 	// Initialize logger
 	logLevel := os.Getenv("LOG_LEVEL")
 	log.InitStdoutLogger(logLevel)
+
+	// start pprof server
+	debug.RunPProf(*pprofAddress, *pprofPort)
 
 	// start pyroscope server
 	debug.RunPyroscope(*pyroscopeAddress, *pyroscopeTag)

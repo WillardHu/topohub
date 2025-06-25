@@ -74,8 +74,9 @@ if [ -n "${PYROSCOPE_LOCAL_PORT}" ]; then
     echo "setup pyroscope on ${ServerAddress}:${PYROSCOPE_LOCAL_PORT}"
     docker run -d --name ${PYROSCOPE_CONTAINER_NAME} -p ${PYROSCOPE_LOCAL_PORT}:4040 ${IMAGE_PYROSCOPE_NAME} server
     echo "set env to topohub"
-    HELM_OPTION+=" --set extraArgs[0]=--pyroscope-address=http://${ServerAddress}:${PYROSCOPE_LOCAL_PORT}"
-    HELM_OPTION+=" --set extraArgs[1]=--pyroscope-tag=topohub"
+    HELM_OPTION+=" --set debug.pyroscope.enabled=true"
+    HELM_OPTION+=" --set debug.pyroscope.address=http://${ServerAddress}:${PYROSCOPE_LOCAL_PORT}"
+    HELM_OPTION+=" --set debug.pyroscope.tag=topohub"
     echo "finish setuping pyroscope"
 fi
 
