@@ -87,6 +87,26 @@ metricsPort: 8083
 # Health probe port
 healthProbePort: 8081
 
+# Debug configuration
+debug:
+  # Pyroscope configuration for profiling
+  pyroscope:
+    # Enable pyroscope profiling
+    enabled: false
+    # The server address where the pyroscope data is pushed
+    address: "http://pyroscope-server:4040"
+    # The tag used for pyroscope
+    tag: "topohub"
+
+  # pprof configuration for profiling
+  pprof:
+    # Enable pprof profiling
+    enabled: false
+    # The host address the pprof endpoint binds to
+    host: "0.0.0.0"
+    # The port used for pprof
+    port: "8084"
+
 # Webhook configuration
 webhook:
   # Port for webhook server to listen on and service to expose
