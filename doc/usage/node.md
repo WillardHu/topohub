@@ -221,7 +221,9 @@ spec:
 EOF
 ```
 
-注意，topohub 在连接每个主机时，都是会使用 helm 安装 topohub 时的 helm 选项 defaultConfig.redfish.username 和 defaultConfig.redfish.password 来连接 BMC 主机，这些认证信息存储在 secret topohub-redfish-auth 中。如果接入的主机使用了不同的认证信息，可需要创建 secret 对象来存储认证信息，参考如下 
+注意，topohub 在连接每个主机时，都是会使用 helm 安装 topohub 时的 helm 选项 defaultConfig.redfish.username 和 defaultConfig.redfish.password 来连接 BMC 主机，这些认证信息存储在 secret topohub-redfish-auth 中。如果接入的主机使用了不同的认证信息，可需要创建 secret 对象来存储认证信息。
+
+**重要提示**：创建的 Secret 必须包含标签 `topohub.io/secret-credential: custom`，这样 topohub 控制器才能正确识别和处理该 Secret。参考如下 
 
 ```bash
 NAME=device10
@@ -234,6 +236,8 @@ kind: Secret
 metadata:
   name: ${NAME}
   namespace: topohub
+  labels:
+    topohub.io/secret-credential: custom
 type: Opaque
 data:
   username: $(echo -n "${USERNAME}" | base64)
@@ -291,6 +295,8 @@ kind: Secret
 metadata:
   name: ${NAME}
   namespace: topohub
+  labels:
+    topohub.io/secret-credential: custom
 type: Opaque
 data:
   username: $(echo -n "${USERNAME}" | base64)

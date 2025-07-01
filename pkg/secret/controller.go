@@ -15,6 +15,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -37,8 +38,22 @@ func NewSecretReconciler(mgr ctrl.Manager, config *config.AgentConfig, redfishSt
 
 // SetupWithManager sets up the controller with the Manager
 func (r *SecretReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	// Create predicate to filter secrets by label
+	redfishSecretPredicate := predicate.NewPredicateFuncs(func(obj client.Object) bool {
+		labels := obj.GetLabels()
+		if labels == nil {
+			return false
+		}
+		// Check if the secret has the topohub.io/secret-credential label (any value)
+		if _, exists := labels["topohub.io/secret-credential"]; exists {
+			return true
+		}
+		return false
+	})
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&corev1.Secret{}).
+		WithEventFilter(redfishSecretPredicate).
 		Complete(r)
 }
 
