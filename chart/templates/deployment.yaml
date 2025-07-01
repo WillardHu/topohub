@@ -7,6 +7,8 @@ metadata:
     {{- include "topohub.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       {{- include "topohub.selectorLabels" . | nindent 6 }}
