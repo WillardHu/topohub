@@ -21,6 +21,8 @@ kind: Secret
 metadata:
   name: test-secret
   namespace: topohub
+  labels:
+    topohub.io/secret-credential: custom
 type: Opaque
 data:
   username: YWRtaW4=  # base64 encoded "admin"
